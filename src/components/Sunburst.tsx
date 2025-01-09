@@ -14,6 +14,7 @@ const Sunburst = () => {
   const { toast } = useToast();
   const [data, setData] = useState<SunburstData>({ name: "center" });
   const [isLoading, setIsLoading] = useState(false);
+  const [scale, setScale] = useState(1);
 
   const handleApiKeyChange = (value: string) => {
     setApiKey(value);
@@ -110,12 +111,35 @@ const Sunburst = () => {
       .attr("viewBox", [-width / 2, -height / 2, width, width])
       .style("font", "20px sans-serif");
 
+    // Add zoom behavior
+    const zoom = d3.zoom()
+      .scaleExtent([0.5, 3])
+      .on("zoom", (event) => {
+        setScale(event.transform.k);
+        svg.attr("transform", event.transform);
+      });
+
+    svg.call(zoom as any);
+
+    // Handle wheel events for zooming
+    svg.on("wheel", (event) => {
+      event.preventDefault();
+      const delta = event.deltaY;
+      const newScale = Math.max(0.5, Math.min(3, scale + (delta > 0 ? -0.1 : 0.1)));
+      setScale(newScale);
+      svg.transition()
+        .duration(250)
+        .call(
+          zoom.transform as any,
+          d3.zoomIdentity.scale(newScale)
+        );
+    });
+
     const path = svg.append("g")
       .selectAll("path")
       .data(root.descendants().slice(1))
       .join("path")
       .attr("fill", (d: any) => {
-        // Get the top-level ancestor for color assignment
         let topAncestor = d;
         while (topAncestor.depth > 1) {
           topAncestor = topAncestor.parent;
@@ -146,11 +170,11 @@ const Sunburst = () => {
       .text((d: any) => d.data.name);
 
     function arcVisible(d: any) {
-      return d.y1 <= 4 && d.y0 >= 1 && d.x1 > d.x0;
+      return d.y1 >= 1 && d.x1 > d.x0;
     }
 
     function labelVisible(d: any) {
-      return d.y1 <= 4 && d.y0 >= 1 && (d.y1 - d.y0) * (d.x1 - d.x0) > 0.03;
+      return d.y1 >= 1 && (d.y1 - d.y0) * (d.x1 - d.x0) > 0.03;
     }
 
     function labelTransform(d: any) {
@@ -158,7 +182,7 @@ const Sunburst = () => {
       const y = (d.y0 + d.y1) / 2 * radius;
       return `rotate(${x - 90}) translate(${y},0) rotate(${x < 180 ? 0 : 180})`;
     }
-  }, [data, isLoading]);
+  }, [data, isLoading, scale]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
