@@ -14,6 +14,7 @@ import { Label } from "./ui/label";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "./ui/form";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
+import { SunburstData } from "@/types/sunburst";
 
 interface DataSidebarProps {
   data: SunburstData;
