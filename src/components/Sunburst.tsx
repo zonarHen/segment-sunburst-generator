@@ -15,6 +15,8 @@ const Sunburst = () => {
   const [data, setData] = useState<SunburstData>({ name: "center" });
   const [isLoading, setIsLoading] = useState(false);
   const [scale, setScale] = useState(1);
+  // Store the current transform state
+  const currentTransformRef = useRef<d3.ZoomTransform | null>(null);
 
   const handleApiKeyChange = (value: string) => {
     setApiKey(value);
@@ -123,9 +125,16 @@ const Sunburst = () => {
       })
       .on("zoom", (event) => {
         g.attr("transform", event.transform);
+        // Store the current transform
+        currentTransformRef.current = event.transform;
       });
 
     svg.call(zoom);
+
+    // If there's a stored transform, apply it immediately
+    if (currentTransformRef.current) {
+      svg.call(zoom.transform, currentTransformRef.current);
+    }
 
     // Handle wheel events for smoother zooming
     svg.on("wheel", (event) => {
