@@ -1,15 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { useToast } from "@/components/ui/use-toast";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-
-interface SunburstData {
-  name: string;
-  children?: SunburstData[];
-  value?: number;
-}
+import { generateSegmentsWithAI } from "../utils/geminiApi";
+import { SunburstData } from "../types/sunburst";
+import SunburstForm from "./SunburstForm";
 
 const Sunburst = () => {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -29,35 +23,7 @@ const Sunburst = () => {
     }
 
     try {
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
-
-      const systemPrompt = parentContext 
-        ? `Given the concept "${prompt}" in the context of "${parentContext}", generate 3-5 direct sub-components or related concepts. Format the response as a JSON object like this:
-          {
-            "name": "${prompt}",
-            "children": [
-              {"name": "sub-component-1", "value": 1},
-              {"name": "sub-component-2", "value": 1}
-            ]
-          }
-          Keep responses focused and directly related to the parent concept.`
-        : `Break down the concept "${prompt}" into 5-8 main components or aspects. Format the response as a JSON object like this:
-          {
-            "name": "${prompt}",
-            "children": [
-              {"name": "component-1", "value": 1},
-              {"name": "component-2", "value": 1}
-            ]
-          }
-          Focus on primary, direct components or aspects.`;
-
-      const result = await model.generateContent(systemPrompt);
-      const text = result.response.text();
-      const jsonStart = text.indexOf("{");
-      const jsonEnd = text.lastIndexOf("}") + 1;
-      const jsonStr = text.slice(jsonStart, jsonEnd);
-      const newData = JSON.parse(jsonStr);
+      const newData = await generateSegmentsWithAI(prompt, parentContext, apiKey);
 
       if (parentContext) {
         // Update existing data structure when clicking on a segment
@@ -108,10 +74,6 @@ const Sunburst = () => {
 
     root.each((d: any) => d.current = d);
 
-    const svg = d3.select(svgRef.current)
-      .attr("viewBox", [-width / 2, -height / 2, width, width])
-      .style("font", "10px sans-serif");
-
     const arc = d3.arc()
       .startAngle((d: any) => d.x0)
       .endAngle((d: any) => d.x1)
@@ -119,6 +81,10 @@ const Sunburst = () => {
       .padRadius(radius * 1.5)
       .innerRadius((d: any) => d.y0 * radius)
       .outerRadius((d: any) => Math.max(d.y0 * radius, d.y1 * radius - 1));
+
+    const svg = d3.select(svgRef.current)
+      .attr("viewBox", [-width / 2, -height / 2, width, width])
+      .style("font", "10px sans-serif");
 
     const path = svg.append("g")
       .selectAll("path")
@@ -174,24 +140,13 @@ const Sunburst = () => {
 
   return (
     <div className="flex flex-col items-center gap-6 p-4">
-      <div className="w-full max-w-md space-y-4">
-        <Input
-          type="password"
-          placeholder="Enter your Google API Key"
-          value={apiKey}
-          onChange={(e) => setApiKey(e.target.value)}
-          className="w-full"
-        />
-        <form onSubmit={handleSubmit} className="flex gap-2">
-          <Input
-            placeholder="Enter a word"
-            value={centerWord}
-            onChange={(e) => setCenterWord(e.target.value)}
-            className="flex-1"
-          />
-          <Button type="submit">Generate</Button>
-        </form>
-      </div>
+      <SunburstForm
+        apiKey={apiKey}
+        centerWord={centerWord}
+        onApiKeyChange={setApiKey}
+        onCenterWordChange={setCenterWord}
+        onSubmit={handleSubmit}
+      />
       <div className="w-full max-w-3xl aspect-square">
         <svg ref={svgRef} width="100%" height="100%" />
       </div>
