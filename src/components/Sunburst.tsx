@@ -115,7 +115,8 @@ const Sunburst = () => {
     const zoom = d3.zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.5, 3])
       .filter((event) => {
-        return event.type === 'wheel' || (event.type === 'mousedown' && event.button === 1);
+        // Allow right mouse button dragging and wheel zooming
+        return event.type === 'wheel' || (event.type === 'mousedown' && event.button === 2);
       })
       .on("zoom", (event) => {
         g.attr("transform", event.transform);
@@ -156,8 +157,13 @@ const Sunburst = () => {
     let startX = 0;
     let startY = 0;
 
+    svg.on("contextmenu", (event) => {
+      // Prevent the context menu from appearing
+      event.preventDefault();
+    });
+
     svg.on("mousedown", (event) => {
-      if (event.button === 1) {
+      if (event.button === 2) { // Right mouse button
         event.preventDefault();
         isDragging = true;
         dragStartTransform = d3.zoomTransform(svg.node()!);
