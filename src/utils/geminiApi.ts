@@ -7,7 +7,21 @@ export const generateSegmentsWithAI = async (
   apiKey: string
 ): Promise<SunburstData> => {
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
+  const model = genAI.getGenerativeModel({ 
+    model: "gemini-2.0-flash-exp",
+  });
+
+  const generationConfig = {
+    temperature: 1,
+    topP: 0.95,
+    topK: 40,
+    maxOutputTokens: 8192,
+  };
+
+  const chatSession = model.startChat({
+    generationConfig,
+    history: [],
+  });
 
   const systemPrompt = parentContext 
     ? `Given the concept "${prompt}" in the context of "${parentContext}", generate 3-5 direct sub-components or related concepts. Format the response as a JSON object like this:
@@ -29,7 +43,7 @@ export const generateSegmentsWithAI = async (
       }
       Focus on primary, direct components or aspects.`;
 
-  const result = await model.generateContent(systemPrompt);
+  const result = await chatSession.sendMessage(systemPrompt);
   const text = result.response.text();
   const jsonStart = text.indexOf("{");
   const jsonEnd = text.lastIndexOf("}") + 1;
