@@ -24,7 +24,9 @@ export const generateSegmentsWithAI = async (
   });
 
   const systemPrompt = parentContext 
-    ? `Given the concept "${prompt}" in the context of "${parentContext}", generate 3-5 direct sub-components or related concepts. Format the response as a JSON object like this:
+    ? `Given the concept "${prompt}" which is a component or aspect of "${parentContext}", generate 3-5 specific sub-components or aspects that are directly related to ${prompt} in the context of ${parentContext}. For example, if ${parentContext} is "bicycle" and ${prompt} is "frame", generate parts or aspects specific to bicycle frames.
+
+      Format the response as a JSON object like this:
       {
         "name": "${prompt}",
         "children": [

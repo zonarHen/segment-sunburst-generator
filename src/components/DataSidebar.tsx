@@ -17,18 +17,19 @@ import { useState } from "react";
 interface TreeNodeProps {
   node: SunburstData;
   depth?: number;
+  parentNode?: string;
   onGenerate?: (nodeName: string, parentContext: string) => void;
 }
 
-const TreeNode = ({ node, depth = 0, onGenerate }: TreeNodeProps) => {
+const TreeNode = ({ node, depth = 0, parentNode, onGenerate }: TreeNodeProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const hasChildren = node.children && node.children.length > 0;
 
   const handleGenerate = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onGenerate) {
-      // Use the current node's name as the parent context when generating children
-      onGenerate(node.name, node.name);
+      // Use the parentNode as context when generating children
+      onGenerate(node.name, parentNode || "");
     }
   };
 
@@ -66,6 +67,7 @@ const TreeNode = ({ node, depth = 0, onGenerate }: TreeNodeProps) => {
                 key={index}
                 node={child}
                 depth={depth + 1}
+                parentNode={node.name}
                 onGenerate={onGenerate}
               />
             ))}
