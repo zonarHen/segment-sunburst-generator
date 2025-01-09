@@ -15,7 +15,6 @@ const Sunburst = () => {
   const [data, setData] = useState<SunburstData>({ name: "center" });
   const [isLoading, setIsLoading] = useState(false);
   const [scale, setScale] = useState(1);
-  // Store the current transform state
   const currentTransformRef = useRef<d3.ZoomTransform | null>(null);
 
   const handleApiKeyChange = (value: string) => {
@@ -83,7 +82,6 @@ const Sunburst = () => {
     const maxDepth = getMaxDepth(data);
     const radius = width / (3 + maxDepth);
 
-    // Clear existing visualization
     d3.select(svgRef.current).selectAll("*").remove();
 
     const color = d3.scaleOrdinal(d3.quantize(d3.interpolateRainbow, data.children?.length || 1 + 1));
@@ -112,14 +110,11 @@ const Sunburst = () => {
       .attr("viewBox", [-width / 2, -height / 2, width, width])
       .style("font", "20px sans-serif");
 
-    // Create a group for the zoomable content
     const g = svg.append("g");
 
-    // Add zoom behavior with improved settings
     const zoom = d3.zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.5, 3])
       .filter((event) => {
-        // Allow both middle mouse button dragging and wheel zooming
         return event.type === 'wheel' || (event.type === 'mousedown' && event.button === 1);
       })
       .on("zoom", (event) => {
@@ -129,12 +124,10 @@ const Sunburst = () => {
 
     svg.call(zoom);
 
-    // If there's a stored transform, apply it immediately
     if (currentTransformRef.current) {
       svg.call(zoom.transform, currentTransformRef.current);
     }
 
-    // Handle wheel events for smoother zooming
     svg.on("wheel", (event) => {
       event.preventDefault();
       const transform = d3.zoomTransform(svg.node()!);
@@ -158,44 +151,48 @@ const Sunburst = () => {
         );
     });
 
-    // Improved dragging behavior
     let isDragging = false;
-    let lastX = 0;
-    let lastY = 0;
+    let dragStartTransform: d3.ZoomTransform | null = null;
+    let startX = 0;
+    let startY = 0;
 
     svg.on("mousedown", (event) => {
-      if (event.button === 1) { // Middle mouse button
-        isDragging = true;
+      if (event.button === 1) {
         event.preventDefault();
+        isDragging = true;
+        dragStartTransform = d3.zoomTransform(svg.node()!);
         const [x, y] = d3.pointer(event);
-        lastX = x;
-        lastY = y;
+        startX = x;
+        startY = y;
       }
     });
 
     svg.on("mousemove", (event) => {
-      if (isDragging) {
+      if (isDragging && dragStartTransform) {
         event.preventDefault();
-        const [x, y] = d3.pointer(event);
-        const dx = x - lastX;
-        const dy = y - lastY;
-        lastX = x;
-        lastY = y;
+        const [currentX, currentY] = d3.pointer(event);
+        const dx = currentX - startX;
+        const dy = currentY - startY;
 
-        const transform = d3.zoomTransform(svg.node()!);
         svg.call(
           zoom.transform,
-          transform.translate(dx, dy)
+          dragStartTransform.translate(dx, dy)
         );
       }
     });
 
     svg.on("mouseup", () => {
-      isDragging = false;
+      if (isDragging) {
+        isDragging = false;
+        dragStartTransform = null;
+      }
     });
 
     svg.on("mouseleave", () => {
-      isDragging = false;
+      if (isDragging) {
+        isDragging = false;
+        dragStartTransform = null;
+      }
     });
 
     const path = g.append("g")
