@@ -104,8 +104,8 @@ export const SunburstVisualization = ({
       .attr("x", 0)
       .attr("y", 0)
       .html(() => {
-        const circleIcon = Circle({ size: 24 });
-        return circleIcon.type === 'svg' ? circleIcon.props.children : null;
+        const circleIcon = Circle({ size: 24 }) as React.ReactElement;
+        return circleIcon.props.children;
       });
   } else {
     label.text((d: any) => {
