@@ -1,4 +1,3 @@
-import { SunburstData } from "@/types/sunburst";
 import {
   Sidebar,
   SidebarContent,
@@ -14,6 +13,7 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "./ui/form";
 import { useForm } from "react-hook-form";
+import { useState } from "react";
 
 interface DataSidebarProps {
   data: SunburstData;
@@ -21,6 +21,7 @@ interface DataSidebarProps {
 }
 
 export const DataSidebar = ({ data, onGenerate }: DataSidebarProps) => {
+  const [isHovered, setIsHovered] = useState(false);
   const form = useForm({
     defaultValues: {
       apiKey: localStorage.getItem("gemini_api_key") || "",
@@ -33,10 +34,14 @@ export const DataSidebar = ({ data, onGenerate }: DataSidebarProps) => {
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <Sidebar>
+      <Sidebar
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className={isHovered ? "group-data-[state=collapsed]:w-[var(--sidebar-width)]" : ""}
+      >
         <SidebarHeader className="border-b px-2 py-4">
           <div className="flex items-center justify-between">
-            <h2 className="font-semibold">Data Structure</h2>
+            <h2 className="font-semibold">Element Breakdown Explorer</h2>
             <SidebarTrigger>
               <PanelLeft className="h-4 w-4" />
             </SidebarTrigger>
