@@ -84,7 +84,6 @@ const Sunburst = () => {
     // Clear existing visualization
     d3.select(svgRef.current).selectAll("*").remove();
 
-    // Create a color scale that will be used consistently
     const color = d3.scaleOrdinal(d3.quantize(d3.interpolateRainbow, data.children?.length || 1 + 1));
 
     const partition = (data: SunburstData) => {
@@ -111,31 +110,46 @@ const Sunburst = () => {
       .attr("viewBox", [-width / 2, -height / 2, width, width])
       .style("font", "20px sans-serif");
 
-    // Add zoom behavior
-    const zoom = d3.zoom()
+    // Create a group for the zoomable content
+    const g = svg.append("g");
+
+    // Add zoom behavior with improved settings
+    const zoom = d3.zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.5, 3])
+      .filter((event) => {
+        // Only allow zooming with wheel and dragging with middle mouse button
+        if (event.type === 'wheel') return true;
+        if (event.type === 'mousedown') return event.button === 1; // middle mouse button
+        return false;
+      })
       .on("zoom", (event) => {
         setScale(event.transform.k);
-        svg.attr("transform", event.transform);
+        g.attr("transform", event.transform);
       });
 
-    svg.call(zoom as any);
+    svg.call(zoom);
 
-    // Handle wheel events for zooming
+    // Handle wheel events for smoother zooming
     svg.on("wheel", (event) => {
       event.preventDefault();
       const delta = event.deltaY;
-      const newScale = Math.max(0.5, Math.min(3, scale + (delta > 0 ? -0.1 : 0.1)));
-      setScale(newScale);
-      svg.transition()
-        .duration(250)
-        .call(
-          zoom.transform as any,
-          d3.zoomIdentity.scale(newScale)
-        );
+      const currentScale = scale;
+      const newScale = Math.max(0.5, Math.min(3, currentScale + (delta > 0 ? -0.1 : 0.1)));
+      
+      if (newScale !== currentScale) {
+        setScale(newScale);
+        svg.transition()
+          .duration(250)
+          .call(
+            zoom.transform,
+            d3.zoomIdentity
+              .translate(event.transform?.x || 0, event.transform?.y || 0)
+              .scale(newScale)
+          );
+      }
     });
 
-    const path = svg.append("g")
+    const path = g.append("g")
       .selectAll("path")
       .data(root.descendants().slice(1))
       .join("path")
@@ -157,7 +171,7 @@ const Sunburst = () => {
         await generateSegments(p.data.name, parentContext);
       });
 
-    const label = svg.append("g")
+    const label = g.append("g")
       .attr("pointer-events", "none")
       .attr("text-anchor", "middle")
       .style("user-select", "none")
