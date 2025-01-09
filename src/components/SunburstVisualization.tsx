@@ -10,6 +10,11 @@ interface SunburstVisualizationProps {
   onSegmentClick: (nodeName: string, parentContext: string) => void;
 }
 
+const getMaxDepth = (node: SunburstData): number => {
+  if (!node.children) return 0;
+  return 1 + Math.max(...node.children.map(child => getMaxDepth(child)));
+};
+
 export const SunburstVisualization = ({ 
   data, 
   svgRef, 
@@ -20,11 +25,6 @@ export const SunburstVisualization = ({
   const width = window.innerWidth;
   const height = window.innerHeight;
   const radius = width / (3 + getMaxDepth(data));
-  
-  const getMaxDepth = (node: SunburstData): number => {
-    if (!node.children) return 0;
-    return 1 + Math.max(...node.children.map(child => getMaxDepth(child)));
-  };
 
   d3.select(svgRef.current).selectAll("*").remove();
 
@@ -76,7 +76,7 @@ export const SunburstVisualization = ({
   if (mode === 'simple') {
     path.style("cursor", "pointer")
       .on("click", (event: any, p: any) => {
-        clicked(event, p, svg, g, path, label, root, arc);
+        clicked(event, p, svg, g, path, label, root, arc, width, radius);
       });
   } else {
     path.filter((d: any) => !d.children)
@@ -104,8 +104,8 @@ export const SunburstVisualization = ({
       .attr("x", 0)
       .attr("y", 0)
       .html(() => {
-        const circleIcon = Circle({ size: 24 }); // Fixed: Remove 'new' keyword, just call the function
-        return circleIcon.props.children;
+        const circleIcon = Circle({ size: 24 });
+        return circleIcon.type === 'svg' ? circleIcon.props.children : null;
       });
   } else {
     label.text((d: any) => {
@@ -153,16 +153,25 @@ function labelTransform(d: any, radius: number) {
   return `rotate(${x - 90}) translate(${y},0) rotate(${x < 180 ? 0 : 180})`;
 }
 
-function clicked(event: any, p: any, svg: any, g: any, path: any, label: any, root: any, arc: any) {
-  const radius = width / (3 + getMaxDepth(root.data));
-  
+function clicked(
+  event: any, 
+  p: any, 
+  svg: any, 
+  g: any, 
+  path: any, 
+  label: any, 
+  root: any, 
+  arc: any,
+  width: number,
+  radius: number
+) {
   const parent = g.append("circle")
     .datum(root)
     .attr("r", radius)
     .attr("fill", "none")
     .attr("pointer-events", "all")
     .on("click", () => {
-      clicked(event, p.parent || root, svg, g, path, label, root, arc);
+      clicked(event, p.parent || root, svg, g, path, label, root, arc, width, radius);
       parent.remove();
     });
 
