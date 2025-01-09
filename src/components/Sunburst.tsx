@@ -83,7 +83,6 @@ const Sunburst = () => {
     // Clear existing visualization
     d3.select(svgRef.current).selectAll("*").remove();
 
-    // Create a color scale that will be used consistently
     const color = d3.scaleOrdinal(d3.quantize(d3.interpolateRainbow, data.children?.length || 1 + 1));
 
     const partition = (data: SunburstData) => {
@@ -110,12 +109,23 @@ const Sunburst = () => {
       .attr("viewBox", [-width / 2, -height / 2, width, width])
       .style("font", "20px sans-serif");
 
-    const path = svg.append("g")
+    // Add zoom behavior
+    const zoom = d3.zoom()
+      .scaleExtent([0.5, 3]) // Set min and max zoom levels
+      .on("zoom", (event) => {
+        g.attr("transform", event.transform);
+      });
+
+    svg.call(zoom as any);
+
+    // Create a group for all elements that will be zoomed
+    const g = svg.append("g");
+
+    const path = g.append("g")
       .selectAll("path")
       .data(root.descendants().slice(1))
       .join("path")
       .attr("fill", (d: any) => {
-        // Get the top-level ancestor for color assignment
         let topAncestor = d;
         while (topAncestor.depth > 1) {
           topAncestor = topAncestor.parent;
@@ -133,7 +143,7 @@ const Sunburst = () => {
         await generateSegments(p.data.name, parentContext);
       });
 
-    const label = svg.append("g")
+    const label = g.append("g")
       .attr("pointer-events", "none")
       .attr("text-anchor", "middle")
       .style("user-select", "none")
