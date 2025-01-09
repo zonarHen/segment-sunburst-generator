@@ -3,7 +3,6 @@ import * as d3 from "d3";
 import { useToast } from "@/components/ui/use-toast";
 import { generateSegmentsWithAI } from "../utils/geminiApi";
 import { SunburstData } from "../types/sunburst";
-import SunburstForm from "./SunburstForm";
 import { DataSidebar } from "./DataSidebar";
 import { SidebarProvider } from "./ui/sidebar";
 import { TutorialPopup } from "./TutorialPopup";
@@ -15,7 +14,6 @@ const Sunburst = () => {
   const { toast } = useToast();
   const [data, setData] = useState<SunburstData>({ name: "center" });
   const [isLoading, setIsLoading] = useState(false);
-  const [scale, setScale] = useState(1);
   const currentTransformRef = useRef<d3.ZoomTransform | null>(null);
 
   const handleApiKeyChange = (value: string) => {
@@ -93,8 +91,8 @@ const Sunburst = () => {
   useEffect(() => {
     if (!data || !svgRef.current) return;
 
-    const width = 1500;
-    const height = width;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
     
     const getMaxDepth = (node: SunburstData): number => {
       if (!node.children) return 0;
@@ -268,7 +266,7 @@ const Sunburst = () => {
       const y = (d.y0 + d.y1) / 2 * radius;
       return `rotate(${x - 90}) translate(${y},0) rotate(${x < 180 ? 0 : 180})`;
     }
-  }, [data, isLoading, scale]);
+  }, [data, isLoading]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -279,28 +277,20 @@ const Sunburst = () => {
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="flex min-h-screen w-full">
+      <div className="flex h-screen w-full">
         <DataSidebar 
           data={data} 
           onGenerate={(nodeName, parentContext) => generateSegments(nodeName, parentContext)}
           apiKey={apiKey}
           onApiKeyChange={handleApiKeyChange}
           onDownload={handleDownload}
+          centerWord={centerWord}
+          onCenterWordChange={setCenterWord}
+          onSubmit={handleSubmit}
+          isLoading={isLoading}
         />
-        <div className="flex-1 p-4">
-          <div className="flex flex-col items-center gap-6">
-            <div className="w-full">
-              <SunburstForm
-                centerWord={centerWord}
-                onCenterWordChange={setCenterWord}
-                onSubmit={handleSubmit}
-                isLoading={isLoading}
-              />
-            </div>
-            <div className="w-full h-[calc(100vh-200px)] aspect-square">
-              <svg ref={svgRef} width="100%" height="100%" preserveAspectRatio="xMidYMid meet" />
-            </div>
-          </div>
+        <div className="flex-1">
+          <svg ref={svgRef} width="100%" height="100%" preserveAspectRatio="xMidYMid meet" />
         </div>
       </div>
       <TutorialPopup />

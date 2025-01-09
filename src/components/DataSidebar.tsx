@@ -1,4 +1,4 @@
-import { ChevronRight, Folder, File, Plus, Download, Key } from "lucide-react";
+import { ChevronRight, Folder, File, Plus, Download, Key, ArrowRight } from "lucide-react";
 import { SunburstData } from "@/types/sunburst";
 import {
   Sidebar,
@@ -85,6 +85,10 @@ interface DataSidebarProps {
   apiKey: string;
   onApiKeyChange: (value: string) => void;
   onDownload: () => void;
+  centerWord: string;
+  onCenterWordChange: (value: string) => void;
+  onSubmit: (e: React.FormEvent) => void;
+  isLoading: boolean;
 }
 
 export const DataSidebar = ({ 
@@ -92,12 +96,36 @@ export const DataSidebar = ({
   onGenerate, 
   apiKey, 
   onApiKeyChange,
-  onDownload 
+  onDownload,
+  centerWord,
+  onCenterWordChange,
+  onSubmit,
+  isLoading
 }: DataSidebarProps) => {
   return (
     <Sidebar>
       <SidebarHeader className="border-b px-4 py-4">
-        <h2 className="font-semibold">Data Structure</h2>
+        <h2 className="font-semibold text-xl">Dissect</h2>
+        <form onSubmit={onSubmit} className="mt-4 space-y-2">
+          <Input
+            placeholder="Enter a word"
+            value={centerWord}
+            onChange={(e) => onCenterWordChange(e.target.value)}
+          />
+          <Button type="submit" disabled={isLoading} size="sm" className="w-full">
+            {isLoading ? (
+              <>
+                <ArrowRight className="mr-2 h-4 w-4 animate-spin" />
+                Generating
+              </>
+            ) : (
+              <>
+                <ArrowRight className="mr-2 h-4 w-4" />
+                Generate
+              </>
+            )}
+          </Button>
+        </form>
       </SidebarHeader>
       <SidebarContent>
         <div className="p-2">
