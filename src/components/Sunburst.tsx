@@ -151,6 +151,34 @@ const Sunburst = () => {
         );
     });
 
+    // Improve dragging behavior
+    let isDragging = false;
+    svg.on("mousedown", (event) => {
+      if (event.button === 1) { // Middle mouse button
+        isDragging = true;
+        event.preventDefault();
+      }
+    });
+
+    svg.on("mousemove", (event) => {
+      if (isDragging) {
+        event.preventDefault();
+        const transform = d3.zoomTransform(svg.node()!);
+        svg.call(
+          zoom.transform,
+          transform.translate(event.movementX, event.movementY)
+        );
+      }
+    });
+
+    svg.on("mouseup", () => {
+      isDragging = false;
+    });
+
+    svg.on("mouseleave", () => {
+      isDragging = false;
+    });
+
     const path = g.append("g")
       .selectAll("path")
       .data(root.descendants().slice(1))
