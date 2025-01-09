@@ -119,13 +119,11 @@ const Sunburst = () => {
     const zoom = d3.zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.5, 3])
       .filter((event) => {
-        if (event.type === 'wheel') return true;
-        if (event.type === 'mousedown') return event.button === 1;
-        return false;
+        // Allow both middle mouse button dragging and wheel zooming
+        return event.type === 'wheel' || (event.type === 'mousedown' && event.button === 1);
       })
       .on("zoom", (event) => {
         g.attr("transform", event.transform);
-        // Store the current transform
         currentTransformRef.current = event.transform;
       });
 
@@ -160,22 +158,34 @@ const Sunburst = () => {
         );
     });
 
-    // Improve dragging behavior
+    // Improved dragging behavior
     let isDragging = false;
+    let lastX = 0;
+    let lastY = 0;
+
     svg.on("mousedown", (event) => {
       if (event.button === 1) { // Middle mouse button
         isDragging = true;
         event.preventDefault();
+        const [x, y] = d3.pointer(event);
+        lastX = x;
+        lastY = y;
       }
     });
 
     svg.on("mousemove", (event) => {
       if (isDragging) {
         event.preventDefault();
+        const [x, y] = d3.pointer(event);
+        const dx = x - lastX;
+        const dy = y - lastY;
+        lastX = x;
+        lastY = y;
+
         const transform = d3.zoomTransform(svg.node()!);
         svg.call(
           zoom.transform,
-          transform.translate(event.movementX, event.movementY)
+          transform.translate(dx, dy)
         );
       }
     });
