@@ -124,11 +124,15 @@ const Sunburst = () => {
       .padAngle((d: any) => Math.min((d.x1 - d.x0) / 2, 0.005))
       .padRadius(radius * 1.5)
       .innerRadius((d: any) => d.y0 * radius)
-      .outerRadius((d: any) => Math.max(d.y0 * radius, d.y1 * radius - 1));
+      .outerRadius((d: any) => {
+        const baseRadius = Math.max(d.y0 * radius, d.y1 * radius - 1);
+        const words = d.data.name.split(' ');
+        return words.length > 1 ? baseRadius + 20 : baseRadius;
+      });
 
     const svg = d3.select(svgRef.current)
       .attr("viewBox", [-width / 2, -height / 2, width, width])
-      .style("font", "20px sans-serif");
+      .style("font", "40px sans-serif");
 
     const g = svg.append("g");
 
@@ -251,7 +255,32 @@ const Sunburst = () => {
       .attr("dy", "0.35em")
       .attr("fill-opacity", (d: any) => +labelVisible(d.current))
       .attr("transform", (d: any) => labelTransform(d.current))
-      .text((d: any) => d.data.name);
+      .text((d: any) => {
+        const words = d.data.name.split(' ');
+        if (words.length > 1) {
+          return words[0] + '\n' + words.slice(1).join(' ');
+        }
+        return d.data.name;
+      })
+      .call(wrap, 30);
+
+    function wrap(text: any, width: number) {
+      text.each(function() {
+        const text = d3.select(this);
+        const words = text.text().split('\n');
+        
+        if (words.length > 1) {
+          text.text('');
+          
+          words.forEach((word: string, i: number) => {
+            text.append("tspan")
+              .attr("x", 0)
+              .attr("dy", i === 0 ? "0em" : "1.2em")
+              .text(word);
+          });
+        }
+      });
+    }
 
     function arcVisible(d: any) {
       return d.y1 >= 1 && d.x1 > d.x0;
