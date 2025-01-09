@@ -14,8 +14,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 
 interface TreeNodeProps {
   node: SunburstData;
@@ -90,8 +88,6 @@ interface DataSidebarProps {
   onCenterWordChange: (value: string) => void;
   onSubmit: (e: React.FormEvent) => void;
   isLoading: boolean;
-  mode: 'manual' | 'simple';
-  onModeChange: (mode: 'manual' | 'simple') => void;
 }
 
 export const DataSidebar = ({ 
@@ -103,9 +99,7 @@ export const DataSidebar = ({
   centerWord,
   onCenterWordChange,
   onSubmit,
-  isLoading,
-  mode,
-  onModeChange
+  isLoading
 }: DataSidebarProps) => {
   return (
     <Sidebar>
@@ -124,14 +118,6 @@ export const DataSidebar = ({
             </Button>
           </div>
         </form>
-        <div className="flex items-center space-x-2 mt-4">
-          <Switch
-            id="mode-switch"
-            checked={mode === 'simple'}
-            onCheckedChange={(checked) => onModeChange(checked ? 'simple' : 'manual')}
-          />
-          <Label htmlFor="mode-switch">Simple Mode</Label>
-        </div>
       </SidebarHeader>
       <SidebarContent>
         <div className="p-2">
