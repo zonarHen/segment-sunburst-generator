@@ -19,14 +19,12 @@ export const SunburstVisualization = ({
 }: SunburstVisualizationProps) => {
   const width = window.innerWidth;
   const height = window.innerHeight;
+  const radius = width / (3 + getMaxDepth(data));
   
   const getMaxDepth = (node: SunburstData): number => {
     if (!node.children) return 0;
     return 1 + Math.max(...node.children.map(child => getMaxDepth(child)));
   };
-  
-  const maxDepth = getMaxDepth(data);
-  const radius = width / (3 + maxDepth);
 
   d3.select(svgRef.current).selectAll("*").remove();
 
@@ -106,8 +104,8 @@ export const SunburstVisualization = ({
       .attr("x", 0)
       .attr("y", 0)
       .html(() => {
-        const circleIcon = new Circle({ size: 24 });
-        return circleIcon.toSVG();
+        const circleIcon = Circle({ size: 24 }); // Fixed: Remove 'new' keyword, just call the function
+        return circleIcon.props.children;
       });
   } else {
     label.text((d: any) => {
@@ -142,11 +140,11 @@ export const SunburstVisualization = ({
 };
 
 function arcVisible(d: any) {
-  return d.y1 >= 1 && d.x1 > d.x0;
+  return d.y1 <= 3 && d.y0 >= 1 && d.x1 > d.x0;
 }
 
 function labelVisible(d: any) {
-  return d.y1 >= 1 && (d.y1 - d.y0) * (d.x1 - d.x0) > 0.03;
+  return d.y1 <= 3 && d.y0 >= 1 && (d.y1 - d.y0) * (d.x1 - d.x0) > 0.03;
 }
 
 function labelTransform(d: any, radius: number) {
@@ -156,6 +154,8 @@ function labelTransform(d: any, radius: number) {
 }
 
 function clicked(event: any, p: any, svg: any, g: any, path: any, label: any, root: any, arc: any) {
+  const radius = width / (3 + getMaxDepth(root.data));
+  
   const parent = g.append("circle")
     .datum(root)
     .attr("r", radius)
@@ -178,17 +178,18 @@ function clicked(event: any, p: any, svg: any, g: any, path: any, label: any, ro
   path.transition(t)
     .tween("data", (d: any) => {
       const i = d3.interpolate(d.current, d.target);
-      return (t: any) => d.current = i(t);
+      return t => d.current = i(t);
     })
     .filter(function(this: any, d: any) {
       return +this.getAttribute("fill-opacity") || arcVisible(d.target);
     })
-    .attr("fill-opacity", (d: any) => arcVisible(d.target) ? (d.children ? 0.6 : 0.4) : 0)
-    .attrTween("d", (d: any) => () => arc(d.current));
+    .attr("fill-opacity", d => arcVisible(d.target) ? (d.children ? 0.6 : 0.4) : 0)
+    .attr("pointer-events", d => arcVisible(d.target) ? "auto" : "none")
+    .attrTween("d", d => () => arc(d.current));
 
   label.filter(function(this: any, d: any) {
     return +this.getAttribute("fill-opacity") || labelVisible(d.target);
   }).transition(t)
-    .attr("fill-opacity", (d: any) => +labelVisible(d.target))
-    .attrTween("transform", (d: any) => () => labelTransform(d.current, radius));
+    .attr("fill-opacity", d => +labelVisible(d.target))
+    .attrTween("transform", d => () => labelTransform(d.current, radius));
 }
