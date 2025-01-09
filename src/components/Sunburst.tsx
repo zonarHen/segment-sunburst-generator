@@ -64,9 +64,9 @@ const Sunburst = () => {
   useEffect(() => {
     if (!data || !svgRef.current) return;
 
-    const width = 800;
+    const width = 1200; // Increased from 800
     const height = width;
-    const radius = width / 6;
+    const radius = width / 4; // Increased from width/6 to make segments larger
 
     // Clear existing visualization
     d3.select(svgRef.current).selectAll("*").remove();
@@ -167,8 +167,8 @@ const Sunburst = () => {
               onSubmit={handleSubmit}
               isLoading={isLoading}
             />
-            <div className="w-full max-w-3xl aspect-square">
-              <svg ref={svgRef} width="100%" height="100%" />
+            <div className="w-full h-[calc(100vh-200px)] aspect-square">
+              <svg ref={svgRef} width="100%" height="100%" preserveAspectRatio="xMidYMid meet" />
             </div>
           </div>
         </div>
