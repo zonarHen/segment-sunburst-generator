@@ -6,6 +6,7 @@ import { SunburstData } from "../types/sunburst";
 import { DataSidebar } from "./DataSidebar";
 import { SidebarProvider } from "./ui/sidebar";
 import { TutorialPopup } from "./TutorialPopup";
+import { Circle } from "lucide-react";
 
 const Sunburst = () => {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -15,6 +16,7 @@ const Sunburst = () => {
   const [data, setData] = useState<SunburstData>({ name: "center" });
   const [isLoading, setIsLoading] = useState(false);
   const currentTransformRef = useRef<d3.ZoomTransform | null>(null);
+  const [mode, setMode] = useState<'manual' | 'simple'>('manual');
 
   const handleApiKeyChange = (value: string) => {
     setApiKey(value);
@@ -126,13 +128,12 @@ const Sunburst = () => {
       .innerRadius((d: any) => d.y0 * radius)
       .outerRadius((d: any) => {
         const baseRadius = Math.max(d.y0 * radius, d.y1 * radius - 1);
-        const words = d.data.name.split(' ');
-        return words.length > 1 ? baseRadius + 20 : baseRadius;
+        return mode === 'simple' ? baseRadius : (d.data.name.split(' ').length > 1 ? baseRadius + 20 : baseRadius);
       });
 
     const svg = d3.select(svgRef.current)
       .attr("viewBox", [-width / 2, -height / 2, width, width])
-      .style("font", "40px sans-serif");
+      .style("font", mode === 'simple' ? "20px sans-serif" : "40px sans-serif");
 
     const g = svg.append("g");
 
@@ -237,13 +238,58 @@ const Sunburst = () => {
       .attr("fill-opacity", (d: any) => arcVisible(d.current) ? (d.children ? 0.6 : 0.4) : 0)
       .attr("d", (d: any) => arc(d.current));
 
-    path.filter((d: any) => !d.children)
-      .style("cursor", "pointer")
-      .on("click", async (event: any, p: any) => {
-        if (isLoading) return;
-        const parentContext = p.parent.data.name;
-        await generateSegments(p.data.name, parentContext);
-      });
+    if (mode === 'simple') {
+      path.style("cursor", "pointer")
+        .on("click", (event: any, p: any) => {
+          const parent = g.append("circle")
+            .datum(root)
+            .attr("r", radius)
+            .attr("fill", "none")
+            .attr("pointer-events", "all")
+            .on("click", () => {
+              clicked(event, p.parent || root);
+              parent.remove();
+            });
+
+          clicked(event, p);
+        });
+
+      function clicked(event: any, p: any) {
+        root.each((d: any) => d.target = {
+          x0: Math.max(0, Math.min(1, (d.x0 - p.x0) / (p.x1 - p.x0))) * 2 * Math.PI,
+          x1: Math.max(0, Math.min(1, (d.x1 - p.x0) / (p.x1 - p.x0))) * 2 * Math.PI,
+          y0: Math.max(0, d.y0 - p.depth),
+          y1: Math.max(0, d.y1 - p.depth)
+        });
+
+        const t = svg.transition().duration(750);
+
+        path.transition(t)
+          .tween("data", (d: any) => {
+            const i = d3.interpolate(d.current, d.target);
+            return (t: any) => d.current = i(t);
+          })
+          .filter(function(this: any, d: any) {
+            return +this.getAttribute("fill-opacity") || arcVisible(d.target);
+          })
+          .attr("fill-opacity", (d: any) => arcVisible(d.target) ? (d.children ? 0.6 : 0.4) : 0)
+          .attrTween("d", (d: any) => () => arc(d.current));
+
+        label.filter(function(this: any, d: any) {
+          return +this.getAttribute("fill-opacity") || labelVisible(d.target);
+        }).transition(t)
+          .attr("fill-opacity", (d: any) => +labelVisible(d.target))
+          .attrTween("transform", (d: any) => () => labelTransform(d.current));
+      }
+    } else {
+      path.filter((d: any) => !d.children)
+        .style("cursor", "pointer")
+        .on("click", async (event: any, p: any) => {
+          if (isLoading) return;
+          const parentContext = p.parent.data.name;
+          await generateSegments(p.data.name, parentContext);
+        });
+    }
 
     const label = g.append("g")
       .attr("pointer-events", "none")
@@ -254,8 +300,15 @@ const Sunburst = () => {
       .join("text")
       .attr("dy", "0.35em")
       .attr("fill-opacity", (d: any) => +labelVisible(d.current))
-      .attr("transform", (d: any) => labelTransform(d.current))
-      .text((d: any) => {
+      .attr("transform", (d: any) => labelTransform(d.current));
+
+    if (mode === 'simple') {
+      label.append("tspan")
+        .attr("x", 0)
+        .attr("y", 0)
+        .append(() => new Circle().toSVG());
+    } else {
+      label.text((d: any) => {
         const words = d.data.name.split(' ');
         if (words.length > 1) {
           return words[0] + '\n' + words.slice(1).join(' ');
@@ -263,9 +316,10 @@ const Sunburst = () => {
         return d.data.name;
       })
       .call(wrap, 30);
+    }
 
     function wrap(text: any, width: number) {
-      text.each(function() {
+      text.each(function(this: any) {
         const text = d3.select(this);
         const words = text.text().split('\n');
         
@@ -295,7 +349,7 @@ const Sunburst = () => {
       const y = (d.y0 + d.y1) / 2 * radius;
       return `rotate(${x - 90}) translate(${y},0) rotate(${x < 180 ? 0 : 180})`;
     }
-  }, [data, isLoading]);
+  }, [data, isLoading, mode]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -317,6 +371,8 @@ const Sunburst = () => {
           onCenterWordChange={setCenterWord}
           onSubmit={handleSubmit}
           isLoading={isLoading}
+          mode={mode}
+          onModeChange={setMode}
         />
         <div className="flex-1">
           <svg ref={svgRef} width="100%" height="100%" preserveAspectRatio="xMidYMid meet" />
