@@ -8,11 +8,11 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar";
 import { TreeNode } from "./TreeNode";
-import { Download, Key } from "lucide-react";
+import { Download, Key, PanelLeft } from "lucide-react";
 import { Input } from "./ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "./ui/form";
 import { useForm } from "react-hook-form";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { SunburstData } from "@/types/sunburst";
 import { Button } from "./ui/button";
 
@@ -33,12 +33,6 @@ export const DataSidebar = ({ data, onGenerate }: DataSidebarProps) => {
     localStorage.setItem("gemini_api_key", values.apiKey);
   };
 
-  const handleMouseMove = (e: MouseEvent) => {
-    if (e.clientX <= 5) {
-      setIsOpen(true);
-    }
-  };
-
   const handleDownloadSVG = () => {
     const svgElement = document.querySelector('svg');
     if (svgElement) {
@@ -55,30 +49,30 @@ export const DataSidebar = ({ data, onGenerate }: DataSidebarProps) => {
     }
   };
 
-  useEffect(() => {
-    document.addEventListener('mousemove', handleMouseMove);
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-    };
-  }, []);
-
   return (
     <SidebarProvider defaultOpen={isOpen}>
-      <Sidebar
-        onMouseLeave={() => setIsOpen(false)}
-        className="fixed left-0 top-0 h-screen group-data-[state=collapsed]:w-0"
-      >
+      <Sidebar className="fixed left-0 top-0 h-screen group-data-[state=collapsed]:w-0">
         <SidebarHeader className="border-b px-2 py-4">
           <div className="flex items-center justify-between">
             <h2 className="font-semibold">Element Breakdown Explorer</h2>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleDownloadSVG}
-              className="ml-2"
-            >
-              <Download className="h-4 w-4" />
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleDownloadSVG}
+                className="ml-2"
+              >
+                <Download className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsOpen(false)}
+                className="ml-2"
+              >
+                <PanelLeft className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </SidebarHeader>
         <SidebarContent>
@@ -111,8 +105,15 @@ export const DataSidebar = ({ data, onGenerate }: DataSidebarProps) => {
             </form>
           </Form>
         </SidebarFooter>
-        <SidebarRail />
       </Sidebar>
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setIsOpen(true)}
+        className={`fixed left-4 top-4 ${isOpen ? 'hidden' : ''}`}
+      >
+        <PanelLeft className="h-4 w-4" />
+      </Button>
     </SidebarProvider>
   );
 };
