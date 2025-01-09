@@ -29,7 +29,6 @@ const TreeNode = ({ node, depth = 0, parentNode, onGenerate }: TreeNodeProps) =>
   const handleGenerate = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onGenerate) {
-      // Use the parentNode as context when generating children
       onGenerate(node.name, parentNode || "");
     }
   };
@@ -106,25 +105,18 @@ export const DataSidebar = ({
     <Sidebar>
       <SidebarHeader className="border-b px-4 py-4">
         <h2 className="font-semibold text-xl">Dissect</h2>
-        <form onSubmit={onSubmit} className="mt-4 space-y-2">
-          <Input
-            placeholder="Enter a word"
-            value={centerWord}
-            onChange={(e) => onCenterWordChange(e.target.value)}
-          />
-          <Button type="submit" disabled={isLoading} size="sm" className="w-full">
-            {isLoading ? (
-              <>
-                <ArrowRight className="mr-2 h-4 w-4 animate-spin" />
-                Generating
-              </>
-            ) : (
-              <>
-                <ArrowRight className="mr-2 h-4 w-4" />
-                Generate
-              </>
-            )}
-          </Button>
+        <form onSubmit={onSubmit} className="mt-4">
+          <div className="flex gap-2">
+            <Input
+              placeholder="Enter a word"
+              value={centerWord}
+              onChange={(e) => onCenterWordChange(e.target.value)}
+            />
+            <Button type="submit" disabled={isLoading} size="icon" className="shrink-0">
+              <ArrowRight className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              <span className="sr-only">Generate</span>
+            </Button>
+          </div>
         </form>
       </SidebarHeader>
       <SidebarContent>
