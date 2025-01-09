@@ -41,6 +41,39 @@ const Sunburst = () => {
     document.body.removeChild(downloadLink);
   };
 
+  const handleGenerate = async (nodeName: string, parentContext: string) => {
+    if (!apiKey) return;
+    
+    setIsLoading(true);
+    try {
+      const newData = await generateSunburstData(apiKey, nodeName, parentContext);
+      setData(prevData => {
+        // Find and update the node in the tree
+        const updateNode = (node: SunburstData): SunburstData => {
+          if (node.name === nodeName) {
+            return {
+              ...node,
+              children: [...(node.children || []), ...newData.children]
+            };
+          }
+          if (node.children) {
+            return {
+              ...node,
+              children: node.children.map(child => updateNode(child))
+            };
+          }
+          return node;
+        };
+        
+        return updateNode(prevData);
+      });
+    } catch (error) {
+      console.error('Error generating data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (centerWord) {
