@@ -64,7 +64,7 @@ const Sunburst = () => {
   useEffect(() => {
     if (!data || !svgRef.current) return;
 
-    const width = 1200;
+    const width = 1500; // Increased from 1200 (25% wider)
     const height = width;
     
     // Calculate the maximum depth of the data
