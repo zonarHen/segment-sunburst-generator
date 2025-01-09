@@ -6,9 +6,14 @@ import {
   SidebarTrigger,
   SidebarProvider,
   SidebarRail,
+  SidebarFooter,
 } from "@/components/ui/sidebar";
 import { TreeNode } from "./TreeNode";
-import { PanelLeft } from "lucide-react";
+import { PanelLeft, Key } from "lucide-react";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { Form, FormControl, FormField, FormItem, FormLabel } from "./ui/form";
+import { useForm } from "react-hook-form";
 
 interface DataSidebarProps {
   data: SunburstData;
@@ -16,6 +21,16 @@ interface DataSidebarProps {
 }
 
 export const DataSidebar = ({ data, onGenerate }: DataSidebarProps) => {
+  const form = useForm({
+    defaultValues: {
+      apiKey: localStorage.getItem("gemini_api_key") || "",
+    },
+  });
+
+  const onSubmit = (values: { apiKey: string }) => {
+    localStorage.setItem("gemini_api_key", values.apiKey);
+  };
+
   return (
     <SidebarProvider defaultOpen={true}>
       <Sidebar>
@@ -32,6 +47,31 @@ export const DataSidebar = ({ data, onGenerate }: DataSidebarProps) => {
             <TreeNode node={data} onGenerate={onGenerate} />
           </div>
         </SidebarContent>
+        <SidebarFooter className="border-t">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="p-4 space-y-2">
+              <FormField
+                control={form.control}
+                name="apiKey"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2">
+                      <Key className="h-4 w-4" />
+                      API Key
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="Enter your Gemini API key"
+                        {...field}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </form>
+          </Form>
+        </SidebarFooter>
         <SidebarRail />
       </Sidebar>
     </SidebarProvider>
