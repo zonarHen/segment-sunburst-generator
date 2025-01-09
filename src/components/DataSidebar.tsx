@@ -8,7 +8,7 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar";
 import { TreeNode } from "./TreeNode";
-import { Download, Key, PanelLeft } from "lucide-react";
+import { Download, Key } from "lucide-react";
 import { Input } from "./ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "./ui/form";
 import { useForm } from "react-hook-form";
@@ -34,7 +34,7 @@ export const DataSidebar = ({ data, onGenerate }: DataSidebarProps) => {
   };
 
   const handleMouseMove = (e: MouseEvent) => {
-    if (e.clientX <= 10) {
+    if (e.clientX <= 5) {
       setIsOpen(true);
     }
   };
@@ -66,7 +66,7 @@ export const DataSidebar = ({ data, onGenerate }: DataSidebarProps) => {
     <SidebarProvider defaultOpen={isOpen}>
       <Sidebar
         onMouseLeave={() => setIsOpen(false)}
-        className="group-data-[state=collapsed]:w-0"
+        className="fixed left-0 top-0 h-screen group-data-[state=collapsed]:w-0"
       >
         <SidebarHeader className="border-b px-2 py-4">
           <div className="flex items-center justify-between">
