@@ -74,8 +74,7 @@ const Sunburst = () => {
     };
     
     const maxDepth = getMaxDepth(data);
-    // Adjust radius based on depth - more layers means smaller initial radius
-    const radius = width / (3 + maxDepth); // Dynamically adjust base radius
+    const radius = width / (3 + maxDepth);
 
     // Clear existing visualization
     d3.select(svgRef.current).selectAll("*").remove();
@@ -104,7 +103,7 @@ const Sunburst = () => {
 
     const svg = d3.select(svgRef.current)
       .attr("viewBox", [-width / 2, -height / 2, width, width])
-      .style("font", "10px sans-serif");
+      .style("font", "20px sans-serif"); // Increased from 10px to 20px (100% larger)
 
     const path = svg.append("g")
       .selectAll("path")
