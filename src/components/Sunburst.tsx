@@ -64,9 +64,18 @@ const Sunburst = () => {
   useEffect(() => {
     if (!data || !svgRef.current) return;
 
-    const width = 1200; // Increased from 800
+    const width = 1200;
     const height = width;
-    const radius = width / 4; // Increased from width/6 to make segments larger
+    
+    // Calculate the maximum depth of the data
+    const getMaxDepth = (node: SunburstData): number => {
+      if (!node.children) return 0;
+      return 1 + Math.max(...node.children.map(child => getMaxDepth(child)));
+    };
+    
+    const maxDepth = getMaxDepth(data);
+    // Adjust radius based on depth - more layers means smaller initial radius
+    const radius = width / (3 + maxDepth); // Dynamically adjust base radius
 
     // Clear existing visualization
     d3.select(svgRef.current).selectAll("*").remove();
@@ -129,7 +138,7 @@ const Sunburst = () => {
       .text((d: any) => d.data.name);
 
     function arcVisible(d: any) {
-      return d.y1 <= 4 && d.y0 >= 1 && d.x1 > d.x0; // Increased from 3 to 4 to show more layers
+      return d.y1 <= 4 && d.y0 >= 1 && d.x1 > d.x0;
     }
 
     function labelVisible(d: any) {
