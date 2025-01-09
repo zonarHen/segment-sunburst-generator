@@ -27,8 +27,8 @@ const TreeNode = ({ node, depth = 0, onGenerate }: TreeNodeProps) => {
   const handleGenerate = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onGenerate) {
-      const parentContext = node.parent || "";
-      onGenerate(node.name, parentContext);
+      // Use the current node's name as the parent context when generating children
+      onGenerate(node.name, node.name);
     }
   };
 
