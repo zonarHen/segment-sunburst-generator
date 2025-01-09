@@ -6,6 +6,9 @@ import { SunburstData } from "../types/sunburst";
 import SunburstForm from "./SunburstForm";
 import { DataSidebar } from "./DataSidebar";
 import { SidebarProvider } from "./ui/sidebar";
+import { TutorialPopup } from "./TutorialPopup";
+import { Button } from "./ui/button";
+import { Download } from "lucide-react";
 
 const Sunburst = () => {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -115,7 +118,6 @@ const Sunburst = () => {
     const zoom = d3.zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.5, 3])
       .filter((event) => {
-        // Allow right mouse button dragging and wheel zooming
         return event.type === 'wheel' || (event.type === 'mousedown' && event.button === 2);
       })
       .on("zoom", (event) => {
@@ -158,12 +160,11 @@ const Sunburst = () => {
     let startY = 0;
 
     svg.on("contextmenu", (event) => {
-      // Prevent the context menu from appearing
       event.preventDefault();
     });
 
     svg.on("mousedown", (event) => {
-      if (event.button === 2) { // Right mouse button
+      if (event.button === 2) {
         event.preventDefault();
         isDragging = true;
         dragStartTransform = d3.zoomTransform(svg.node()!);
@@ -257,6 +258,27 @@ const Sunburst = () => {
     }
   };
 
+  const handleDownload = () => {
+    if (!svgRef.current) return;
+    
+    const svgData = new XMLSerializer().serializeToString(svgRef.current);
+    const blob = new Blob([svgData], { type: "image/svg+xml" });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "concept-map.svg";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "Download Complete",
+      description: "Your diagram has been downloaded as an SVG file.",
+    });
+  };
+
   return (
     <SidebarProvider defaultOpen={true}>
       <div className="flex min-h-screen w-full">
@@ -266,20 +288,27 @@ const Sunburst = () => {
         />
         <div className="flex-1 p-4">
           <div className="flex flex-col items-center gap-6">
-            <SunburstForm
-              apiKey={apiKey}
-              centerWord={centerWord}
-              onApiKeyChange={handleApiKeyChange}
-              onCenterWordChange={setCenterWord}
-              onSubmit={handleSubmit}
-              isLoading={isLoading}
-            />
+            <div className="w-full flex justify-between items-center">
+              <SunburstForm
+                apiKey={apiKey}
+                centerWord={centerWord}
+                onApiKeyChange={handleApiKeyChange}
+                onCenterWordChange={setCenterWord}
+                onSubmit={handleSubmit}
+                isLoading={isLoading}
+              />
+              <Button onClick={handleDownload} className="ml-4">
+                <Download className="mr-2 h-4 w-4" />
+                Download SVG
+              </Button>
+            </div>
             <div className="w-full h-[calc(100vh-200px)] aspect-square">
               <svg ref={svgRef} width="100%" height="100%" preserveAspectRatio="xMidYMid meet" />
             </div>
           </div>
         </div>
       </div>
+      <TutorialPopup />
     </SidebarProvider>
   );
 };
