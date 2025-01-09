@@ -8,13 +8,13 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar";
 import { TreeNode } from "./TreeNode";
-import { PanelLeft, Key } from "lucide-react";
+import { Download, Key, PanelLeft } from "lucide-react";
 import { Input } from "./ui/input";
-import { Label } from "./ui/label";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "./ui/form";
 import { useForm } from "react-hook-form";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SunburstData } from "@/types/sunburst";
+import { Button } from "./ui/button";
 
 interface DataSidebarProps {
   data: SunburstData;
@@ -22,7 +22,7 @@ interface DataSidebarProps {
 }
 
 export const DataSidebar = ({ data, onGenerate }: DataSidebarProps) => {
-  const [isHovered, setIsHovered] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const form = useForm({
     defaultValues: {
       apiKey: localStorage.getItem("gemini_api_key") || "",
@@ -33,19 +33,52 @@ export const DataSidebar = ({ data, onGenerate }: DataSidebarProps) => {
     localStorage.setItem("gemini_api_key", values.apiKey);
   };
 
+  const handleMouseMove = (e: MouseEvent) => {
+    if (e.clientX <= 10) {
+      setIsOpen(true);
+    }
+  };
+
+  const handleDownloadSVG = () => {
+    const svgElement = document.querySelector('svg');
+    if (svgElement) {
+      const svgData = new XMLSerializer().serializeToString(svgElement);
+      const blob = new Blob([svgData], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'element-breakdown.svg';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener('mousemove', handleMouseMove);
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, []);
+
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider defaultOpen={isOpen}>
       <Sidebar
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        className={isHovered ? "group-data-[state=collapsed]:w-[var(--sidebar-width)]" : ""}
+        onMouseLeave={() => setIsOpen(false)}
+        className="group-data-[state=collapsed]:w-0"
       >
         <SidebarHeader className="border-b px-2 py-4">
           <div className="flex items-center justify-between">
             <h2 className="font-semibold">Element Breakdown Explorer</h2>
-            <SidebarTrigger>
-              <PanelLeft className="h-4 w-4" />
-            </SidebarTrigger>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleDownloadSVG}
+              className="ml-2"
+            >
+              <Download className="h-4 w-4" />
+            </Button>
           </div>
         </SidebarHeader>
         <SidebarContent>
