@@ -5,8 +5,10 @@ import {
   SidebarHeader,
   SidebarTrigger,
   SidebarProvider,
+  SidebarRail,
 } from "@/components/ui/sidebar";
 import { TreeNode } from "./TreeNode";
+import { PanelLeft } from "lucide-react";
 
 interface DataSidebarProps {
   data: SunburstData;
@@ -20,7 +22,9 @@ export const DataSidebar = ({ data, onGenerate }: DataSidebarProps) => {
         <SidebarHeader className="border-b px-2 py-4">
           <div className="flex items-center justify-between">
             <h2 className="font-semibold">Data Structure</h2>
-            <SidebarTrigger />
+            <SidebarTrigger>
+              <PanelLeft className="h-4 w-4" />
+            </SidebarTrigger>
           </div>
         </SidebarHeader>
         <SidebarContent>
@@ -28,6 +32,7 @@ export const DataSidebar = ({ data, onGenerate }: DataSidebarProps) => {
             <TreeNode node={data} onGenerate={onGenerate} />
           </div>
         </SidebarContent>
+        <SidebarRail />
       </Sidebar>
     </SidebarProvider>
   );
