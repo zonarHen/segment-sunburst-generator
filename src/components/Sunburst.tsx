@@ -149,7 +149,10 @@ const Sunburst = () => {
   return (
     <SidebarProvider defaultOpen={true}>
       <div className="flex min-h-screen w-full">
-        <DataSidebar data={data} />
+        <DataSidebar 
+          data={data} 
+          onGenerate={(nodeName, parentContext) => generateSegments(nodeName, parentContext)} 
+        />
         <div className="flex-1 p-4">
           <div className="flex flex-col items-center gap-6">
             <SunburstForm
