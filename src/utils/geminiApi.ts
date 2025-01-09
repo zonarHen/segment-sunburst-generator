@@ -52,6 +52,3 @@ export const generateSegmentsWithAI = async (
   const jsonStr = text.slice(jsonStart, jsonEnd);
   return JSON.parse(jsonStr);
 };
-
-// Alias the function for backward compatibility
-export const generateSunburstData = generateSegmentsWithAI;

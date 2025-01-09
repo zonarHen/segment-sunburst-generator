@@ -1,12 +1,7 @@
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, Key, Type, MousePointer, Download, Folder } from "lucide-react";
-import { useState } from "react";
-
-interface TutorialPopupProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}
 
 interface TutorialStep {
   title: string;
@@ -42,14 +37,23 @@ const steps: TutorialStep[] = [
   },
 ];
 
-export const TutorialPopup = ({ open, onOpenChange }: TutorialPopupProps) => {
+export const TutorialPopup = () => {
+  const [open, setOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
+
+  useEffect(() => {
+    const hasSeenTutorial = localStorage.getItem("hasSeenTutorial");
+    if (!hasSeenTutorial) {
+      setOpen(true);
+      localStorage.setItem("hasSeenTutorial", "true");
+    }
+  }, []);
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      onOpenChange(false);
+      setOpen(false);
     }
   };
 
@@ -60,7 +64,7 @@ export const TutorialPopup = ({ open, onOpenChange }: TutorialPopupProps) => {
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="sm:max-w-md">
         <div className="flex flex-col items-center text-center p-4">
           {steps[currentStep].icon}
