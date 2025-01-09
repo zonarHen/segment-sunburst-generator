@@ -1,4 +1,4 @@
-import { ChevronRight, Folder, File, Plus, Download, Key, ArrowRight } from "lucide-react";
+import { ChevronRight, Folder, File, Plus, Download, Key, ArrowRight, FileJson } from "lucide-react";
 import { SunburstData } from "@/types/sunburst";
 import {
   Sidebar,
@@ -101,6 +101,20 @@ export const DataSidebar = ({
   onSubmit,
   isLoading
 }: DataSidebarProps) => {
+  const handleJsonDownload = () => {
+    const jsonString = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonString], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "concept-map.json";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <Sidebar>
       <SidebarHeader className="border-b px-4 py-4">
@@ -136,15 +150,28 @@ export const DataSidebar = ({
               className="h-8"
             />
           </div>
-          <Button 
-            onClick={onDownload} 
-            variant="outline" 
-            size="sm"
-            className="w-full"
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Download SVG
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={onDownload} 
+              variant="outline" 
+              size="icon"
+              className="flex-1"
+              title="Download SVG"
+            >
+              <Download className="h-4 w-4" />
+              <span className="sr-only">Download SVG</span>
+            </Button>
+            <Button 
+              onClick={handleJsonDownload} 
+              variant="outline" 
+              size="icon"
+              className="flex-1"
+              title="Download JSON"
+            >
+              <FileJson className="h-4 w-4" />
+              <span className="sr-only">Download JSON</span>
+            </Button>
+          </div>
         </div>
       </SidebarFooter>
     </Sidebar>
