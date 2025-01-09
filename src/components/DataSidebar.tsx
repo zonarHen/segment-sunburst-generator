@@ -97,7 +97,14 @@ export const DataSidebar = ({
   return (
     <Sidebar>
       <SidebarHeader className="border-b px-4 py-4">
-        <h2 className="font-semibold mb-4">Data Structure</h2>
+        <h2 className="font-semibold">Data Structure</h2>
+      </SidebarHeader>
+      <SidebarContent>
+        <div className="p-2">
+          <TreeNode node={data} onGenerate={onGenerate} />
+        </div>
+      </SidebarContent>
+      <SidebarFooter className="border-t px-4 py-4">
         <div className="space-y-4">
           <div className="flex items-center space-x-2">
             <Key className="h-4 w-4 text-muted-foreground" />
@@ -119,12 +126,7 @@ export const DataSidebar = ({
             Download SVG
           </Button>
         </div>
-      </SidebarHeader>
-      <SidebarContent>
-        <div className="p-2">
-          <TreeNode node={data} onGenerate={onGenerate} />
-        </div>
-      </SidebarContent>
+      </SidebarFooter>
     </Sidebar>
   );
 };
