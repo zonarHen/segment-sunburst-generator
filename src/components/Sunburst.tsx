@@ -18,7 +18,7 @@ const Sunburst = () => {
   const { toast } = useToast();
   const [data, setData] = useState<SunburstData>({ name: "center" });
 
-  const generateSegments = async (prompt: string) => {
+  const generateSegments = async (prompt: string, parentContext: string = "") => {
     if (!apiKey) {
       toast({
         title: "API Key Required",
@@ -32,23 +32,25 @@ const Sunburst = () => {
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
 
-      const systemPrompt = `Given the word or concept "${prompt}", generate a JSON structure for a sunburst diagram. The response should be in this format:
-      {
-        "name": "${prompt}",
-        "children": [
+      const systemPrompt = parentContext 
+        ? `Given the concept "${prompt}" in the context of "${parentContext}", generate 3-5 direct sub-components or related concepts. Format the response as a JSON object like this:
           {
-            "name": "related-concept-1",
-            "value": 1
-          },
-          {
-            "name": "related-concept-2",
+            "name": "${prompt}",
             "children": [
-              {"name": "sub-concept", "value": 1}
+              {"name": "sub-component-1", "value": 1},
+              {"name": "sub-component-2", "value": 1}
             ]
           }
-        ]
-      }
-      Generate 5-8 related concepts that are semantically connected to the input.`;
+          Keep responses focused and directly related to the parent concept.`
+        : `Break down the concept "${prompt}" into 5-8 main components or aspects. Format the response as a JSON object like this:
+          {
+            "name": "${prompt}",
+            "children": [
+              {"name": "component-1", "value": 1},
+              {"name": "component-2", "value": 1}
+            ]
+          }
+          Focus on primary, direct components or aspects.`;
 
       const result = await model.generateContent(systemPrompt);
       const text = result.response.text();
@@ -56,7 +58,26 @@ const Sunburst = () => {
       const jsonEnd = text.lastIndexOf("}") + 1;
       const jsonStr = text.slice(jsonStart, jsonEnd);
       const newData = JSON.parse(jsonStr);
-      setData(newData);
+
+      if (parentContext) {
+        // Update existing data structure when clicking on a segment
+        const updateDataStructure = (node: SunburstData): SunburstData => {
+          if (node.name === prompt) {
+            return { ...node, ...newData };
+          }
+          if (node.children) {
+            return {
+              ...node,
+              children: node.children.map(child => updateDataStructure(child))
+            };
+          }
+          return node;
+        };
+        setData(prevData => updateDataStructure(prevData));
+      } else {
+        // Set new data for initial word
+        setData(newData);
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -110,10 +131,11 @@ const Sunburst = () => {
       .attr("fill-opacity", (d: any) => arcVisible(d.current) ? (d.children ? 0.6 : 0.4) : 0)
       .attr("d", (d: any) => arc(d.current));
 
-    path.filter((d: any) => d.children)
+    path.filter((d: any) => !d.children)
       .style("cursor", "pointer")
       .on("click", (event: any, p: any) => {
-        generateSegments(p.data.name);
+        const parentContext = p.parent.data.name;
+        generateSegments(p.data.name, parentContext);
       });
 
     const label = svg.append("g")
