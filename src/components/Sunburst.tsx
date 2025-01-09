@@ -68,17 +68,21 @@ const Sunburst = () => {
     const height = width;
     const radius = width / 6;
 
+    // Clear existing visualization
     d3.select(svgRef.current).selectAll("*").remove();
 
     const color = d3.scaleOrdinal(d3.quantize(d3.interpolateRainbow, data.children?.length || 1 + 1));
 
-    const hierarchy = d3.hierarchy(data)
-      .sum(d => d.value || 0)
-      .sort((a, b) => (b.value || 0) - (a.value || 0));
+    const partition = (data: SunburstData) => {
+      const root = d3.hierarchy(data)
+        .sum(d => d.value || 1)
+        .sort((a, b) => (b.value || 0) - (a.value || 0));
+      return d3.partition()
+        .size([2 * Math.PI, root.height + 1])
+        (root);
+    };
 
-    const root = d3.partition()
-      .size([2 * Math.PI, hierarchy.height + 1])(hierarchy);
-
+    const root = partition(data);
     root.each((d: any) => d.current = d);
 
     const arc = d3.arc()
