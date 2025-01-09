@@ -14,7 +14,6 @@ const Sunburst = () => {
   const { toast } = useToast();
   const [data, setData] = useState<SunburstData>({ name: "center" });
   const [isLoading, setIsLoading] = useState(false);
-  const [scale, setScale] = useState(1);
 
   const generateSegments = async (prompt: string, parentContext: string = "") => {
     if (!apiKey) {
@@ -65,24 +64,21 @@ const Sunburst = () => {
   useEffect(() => {
     if (!data || !svgRef.current) return;
 
-    const width = 1200; // Increased from 800
+    const width = 800;
     const height = width;
-    const radius = width / 3; // Adjusted radius for better proportions with larger size
+    const radius = width / 6;
 
     d3.select(svgRef.current).selectAll("*").remove();
 
     const color = d3.scaleOrdinal(d3.quantize(d3.interpolateRainbow, data.children?.length || 1 + 1));
 
-    const partition = (data: any) => {
-      const root = d3.hierarchy(data)
-        .sum(d => d.value || 1)
-        .sort((a, b) => (b.value || 0) - (a.value || 0));
-      return d3.partition()
-        .size([2 * Math.PI, root.height + 1])
-        (root);
-    };
+    const hierarchy = d3.hierarchy(data)
+      .sum(d => d.value || 0)
+      .sort((a, b) => (b.value || 0) - (a.value || 0));
 
-    const root = partition(data);
+    const root = d3.partition()
+      .size([2 * Math.PI, hierarchy.height + 1])(hierarchy);
+
     root.each((d: any) => d.current = d);
 
     const arc = d3.arc()
@@ -95,21 +91,9 @@ const Sunburst = () => {
 
     const svg = d3.select(svgRef.current)
       .attr("viewBox", [-width / 2, -height / 2, width, width])
-      .style("font", "12px sans-serif"); // Increased font size
+      .style("font", "10px sans-serif");
 
-    // Add zoom behavior
-    const zoom = d3.zoom()
-      .scaleExtent([0.5, 3])
-      .on("zoom", (event) => {
-        setScale(event.transform.k);
-        svg.attr("transform", event.transform);
-      });
-
-    svg.call(zoom as any);
-
-    const g = svg.append("g");
-
-    const path = g.append("g")
+    const path = svg.append("g")
       .selectAll("path")
       .data(root.descendants().slice(1))
       .join("path")
@@ -128,7 +112,7 @@ const Sunburst = () => {
         await generateSegments(p.data.name, parentContext);
       });
 
-    const label = g.append("g")
+    const label = svg.append("g")
       .attr("pointer-events", "none")
       .attr("text-anchor", "middle")
       .style("user-select", "none")
@@ -141,11 +125,11 @@ const Sunburst = () => {
       .text((d: any) => d.data.name);
 
     function arcVisible(d: any) {
-      return d.y1 <= 5 && d.y0 >= 0 && d.x1 > d.x0;
+      return d.y1 <= 3 && d.y0 >= 1 && d.x1 > d.x0;
     }
 
     function labelVisible(d: any) {
-      return d.y1 <= 5 && d.y0 >= 0 && (d.y1 - d.y0) * (d.x1 - d.x0) > 0.03;
+      return d.y1 <= 3 && d.y0 >= 1 && (d.y1 - d.y0) * (d.x1 - d.x0) > 0.03;
     }
 
     function labelTransform(d: any) {
@@ -176,16 +160,8 @@ const Sunburst = () => {
               onSubmit={handleSubmit}
               isLoading={isLoading}
             />
-            <div className="w-full max-w-[1200px] aspect-square relative">
-              <svg 
-                ref={svgRef} 
-                width="100%" 
-                height="100%" 
-                className="cursor-move"
-              />
-              <div className="absolute bottom-4 right-4 bg-white/80 px-3 py-1 rounded-full text-sm">
-                Zoom: {Math.round(scale * 100)}%
-              </div>
+            <div className="w-full max-w-3xl aspect-square">
+              <svg ref={svgRef} width="100%" height="100%" />
             </div>
           </div>
         </div>
