@@ -10,10 +10,15 @@ import { SidebarProvider } from "./ui/sidebar";
 const Sunburst = () => {
   const svgRef = useRef<SVGSVGElement>(null);
   const [centerWord, setCenterWord] = useState("");
-  const [apiKey, setApiKey] = useState("");
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem("gemini_api_key") || "");
   const { toast } = useToast();
   const [data, setData] = useState<SunburstData>({ name: "center" });
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleApiKeyChange = (value: string) => {
+    setApiKey(value);
+    localStorage.setItem("gemini_api_key", value);
+  };
 
   const generateSegments = async (prompt: string, parentContext: string = "") => {
     if (!apiKey) {
@@ -174,7 +179,7 @@ const Sunburst = () => {
             <SunburstForm
               apiKey={apiKey}
               centerWord={centerWord}
-              onApiKeyChange={setApiKey}
+              onApiKeyChange={handleApiKeyChange}
               onCenterWordChange={setCenterWord}
               onSubmit={handleSubmit}
               isLoading={isLoading}
