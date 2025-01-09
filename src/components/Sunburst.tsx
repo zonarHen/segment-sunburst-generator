@@ -129,11 +129,11 @@ const Sunburst = () => {
       .text((d: any) => d.data.name);
 
     function arcVisible(d: any) {
-      return d.y1 <= 3 && d.y0 >= 1 && d.x1 > d.x0;
+      return d.y1 <= 4 && d.y0 >= 1 && d.x1 > d.x0; // Increased from 3 to 4 to show more layers
     }
 
     function labelVisible(d: any) {
-      return d.y1 <= 3 && d.y0 >= 1 && (d.y1 - d.y0) * (d.x1 - d.x0) > 0.03;
+      return d.y1 <= 4 && d.y0 >= 1 && (d.y1 - d.y0) * (d.x1 - d.x0) > 0.03;
     }
 
     function labelTransform(d: any) {
