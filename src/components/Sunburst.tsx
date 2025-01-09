@@ -9,7 +9,6 @@ const Sunburst = () => {
   const svgRef = useRef<SVGSVGElement>(null);
   const [centerWord, setCenterWord] = useState("");
   const [apiKey, setApiKey] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const [data, setData] = useState<SunburstData>({ name: "center" });
 
@@ -23,55 +22,34 @@ const Sunburst = () => {
       return;
     }
 
-    if (isLoading) {
-      toast({
-        title: "Processing",
-        description: "Please wait while we generate the segments",
-      });
-      return;
-    }
-
     try {
-      setIsLoading(true);
       const newData = await generateSegmentsWithAI(prompt, parentContext, apiKey);
 
       if (parentContext) {
-        setData(prevData => {
-          const updateDataStructure = (node: SunburstData): SunburstData => {
-            if (node.name === prompt) {
-              return { ...node, children: newData.children };
-            }
-            if (node.children) {
-              return {
-                ...node,
-                children: node.children.map(child => updateDataStructure(child))
-              };
-            }
-            return node;
-          };
-          return updateDataStructure(prevData);
-        });
+        // Update existing data structure when clicking on a segment
+        const updateDataStructure = (node: SunburstData): SunburstData => {
+          if (node.name === prompt) {
+            return { ...node, ...newData };
+          }
+          if (node.children) {
+            return {
+              ...node,
+              children: node.children.map(child => updateDataStructure(child))
+            };
+          }
+          return node;
+        };
+        setData(prevData => updateDataStructure(prevData));
       } else {
+        // Set new data for initial word
         setData(newData);
       }
     } catch (error) {
-      let errorMessage = "Failed to generate segments. Please try again.";
-      
-      if (error instanceof Error) {
-        if (error.message.includes("429")) {
-          errorMessage = "Too many requests. Please wait a moment and try again.";
-        } else if (error.message.includes("404")) {
-          errorMessage = "API endpoint not found. Please check your configuration.";
-        }
-      }
-      
       toast({
         title: "Error",
-        description: errorMessage,
+        description: "Failed to generate segments. Please check your API key and try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -121,10 +99,9 @@ const Sunburst = () => {
 
     path.filter((d: any) => !d.children)
       .style("cursor", "pointer")
-      .on("click", async (event: any, p: any) => {
-        if (isLoading) return;
+      .on("click", (event: any, p: any) => {
         const parentContext = p.parent.data.name;
-        await generateSegments(p.data.name, parentContext);
+        generateSegments(p.data.name, parentContext);
       });
 
     const label = svg.append("g")
@@ -152,7 +129,7 @@ const Sunburst = () => {
       const y = (d.y0 + d.y1) / 2 * radius;
       return `rotate(${x - 90}) translate(${y},0) rotate(${x < 180 ? 0 : 180})`;
     }
-  }, [data, isLoading]);
+  }, [data]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -169,7 +146,6 @@ const Sunburst = () => {
         onApiKeyChange={setApiKey}
         onCenterWordChange={setCenterWord}
         onSubmit={handleSubmit}
-        isLoading={isLoading}
       />
       <div className="w-full max-w-3xl aspect-square">
         <svg ref={svgRef} width="100%" height="100%" />
