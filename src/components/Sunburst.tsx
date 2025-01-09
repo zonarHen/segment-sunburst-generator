@@ -64,10 +64,9 @@ const Sunburst = () => {
   useEffect(() => {
     if (!data || !svgRef.current) return;
 
-    const width = 1500; // Increased from 1200 (25% wider)
+    const width = 1500;
     const height = width;
     
-    // Calculate the maximum depth of the data
     const getMaxDepth = (node: SunburstData): number => {
       if (!node.children) return 0;
       return 1 + Math.max(...node.children.map(child => getMaxDepth(child)));
@@ -79,6 +78,7 @@ const Sunburst = () => {
     // Clear existing visualization
     d3.select(svgRef.current).selectAll("*").remove();
 
+    // Create a color scale that will be used consistently
     const color = d3.scaleOrdinal(d3.quantize(d3.interpolateRainbow, data.children?.length || 1 + 1));
 
     const partition = (data: SunburstData) => {
@@ -103,15 +103,19 @@ const Sunburst = () => {
 
     const svg = d3.select(svgRef.current)
       .attr("viewBox", [-width / 2, -height / 2, width, width])
-      .style("font", "20px sans-serif"); // Increased from 10px to 20px (100% larger)
+      .style("font", "20px sans-serif");
 
     const path = svg.append("g")
       .selectAll("path")
       .data(root.descendants().slice(1))
       .join("path")
       .attr("fill", (d: any) => {
-        while (d.depth > 1) d = d.parent;
-        return color(d.data.name);
+        // Get the top-level ancestor for color assignment
+        let topAncestor = d;
+        while (topAncestor.depth > 1) {
+          topAncestor = topAncestor.parent;
+        }
+        return color(topAncestor.data.name);
       })
       .attr("fill-opacity", (d: any) => arcVisible(d.current) ? (d.children ? 0.6 : 0.4) : 0)
       .attr("d", (d: any) => arc(d.current));
