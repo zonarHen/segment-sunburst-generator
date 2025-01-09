@@ -117,13 +117,11 @@ const Sunburst = () => {
     const zoom = d3.zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.5, 3])
       .filter((event) => {
-        // Only allow zooming with wheel and dragging with middle mouse button
         if (event.type === 'wheel') return true;
-        if (event.type === 'mousedown') return event.button === 1; // middle mouse button
+        if (event.type === 'mousedown') return event.button === 1;
         return false;
       })
       .on("zoom", (event) => {
-        setScale(event.transform.k);
         g.attr("transform", event.transform);
       });
 
@@ -132,21 +130,25 @@ const Sunburst = () => {
     // Handle wheel events for smoother zooming
     svg.on("wheel", (event) => {
       event.preventDefault();
+      const transform = d3.zoomTransform(svg.node()!);
       const delta = event.deltaY;
-      const currentScale = scale;
-      const newScale = Math.max(0.5, Math.min(3, currentScale + (delta > 0 ? -0.1 : 0.1)));
+      const newScale = Math.max(0.5, Math.min(3, transform.k - (delta * 0.002)));
       
-      if (newScale !== currentScale) {
-        setScale(newScale);
-        svg.transition()
-          .duration(250)
-          .call(
-            zoom.transform,
-            d3.zoomIdentity
-              .translate(event.transform?.x || 0, event.transform?.y || 0)
-              .scale(newScale)
-          );
-      }
+      const pointer = d3.pointer(event);
+      const [x, y] = pointer;
+      
+      svg.transition()
+        .duration(250)
+        .call(
+          zoom.transform,
+          d3.zoomIdentity
+            .translate(transform.x, transform.y)
+            .scale(newScale)
+            .translate(
+              (x - transform.x) * (1 - newScale / transform.k),
+              (y - transform.y) * (1 - newScale / transform.k)
+            )
+        );
     });
 
     const path = g.append("g")
