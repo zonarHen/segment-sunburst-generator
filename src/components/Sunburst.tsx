@@ -1,4 +1,3 @@
-<lov-code>
 import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import { useToast } from "@/components/ui/use-toast";
@@ -62,3 +61,54 @@ const Sunburst = () => {
         setData(newData);
       }
     } catch (error) {
+      console.error("Error generating segments:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate segments. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (centerWord.trim()) {
+      await generateSegments(centerWord);
+    }
+  };
+
+  return (
+    <div className="flex flex-col md:flex-row gap-4 w-full">
+      <div className="flex-1 min-h-[500px] relative">
+        <div className="sticky top-4">
+          <div className="flex flex-col items-center gap-4 mb-8">
+            <SunburstForm
+              apiKey={apiKey}
+              centerWord={centerWord}
+              onApiKeyChange={handleApiKeyChange}
+              onCenterWordChange={setCenterWord}
+              onSubmit={handleSubmit}
+              isLoading={isLoading}
+            />
+          </div>
+          <svg
+            ref={svgRef}
+            className="w-full h-auto"
+            style={{
+              maxHeight: "calc(100vh - 200px)",
+              minHeight: "500px"
+            }}
+          />
+        </div>
+      </div>
+      <SidebarProvider>
+        <DataSidebar data={data} onGenerateClick={generateSegments} />
+      </SidebarProvider>
+      <TutorialPopup />
+    </div>
+  );
+};
+
+export default Sunburst;
