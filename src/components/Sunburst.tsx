@@ -66,22 +66,19 @@ const Sunburst = () => {
 
     const width = 800;
     const height = width;
-    const radius = width / 4; // Increased radius for better visibility
+    const radius = width / 6;
 
     d3.select(svgRef.current).selectAll("*").remove();
 
     const color = d3.scaleOrdinal(d3.quantize(d3.interpolateRainbow, data.children?.length || 1 + 1));
 
-    const partition = (data: any) => {
-      const root = d3.hierarchy(data)
-        .sum(d => d.value || 1)
-        .sort((a, b) => (b.value || 0) - (a.value || 0));
-      return d3.partition()
-        .size([2 * Math.PI, root.height + 1])
-        (root);
-    };
+    const hierarchy = d3.hierarchy(data)
+      .sum(d => d.value || 0)
+      .sort((a, b) => (b.value || 0) - (a.value || 0));
 
-    const root = partition(data);
+    const root = d3.partition()
+      .size([2 * Math.PI, hierarchy.height + 1])(hierarchy);
+
     root.each((d: any) => d.current = d);
 
     const arc = d3.arc()
@@ -128,11 +125,11 @@ const Sunburst = () => {
       .text((d: any) => d.data.name);
 
     function arcVisible(d: any) {
-      return d.y1 <= 5 && d.y0 >= 1 && d.x1 > d.x0; // Increased max depth from 3 to 5
+      return d.y1 <= 3 && d.y0 >= 1 && d.x1 > d.x0;
     }
 
     function labelVisible(d: any) {
-      return d.y1 <= 5 && d.y0 >= 1 && (d.y1 - d.y0) * (d.x1 - d.x0) > 0.03;
+      return d.y1 <= 3 && d.y0 >= 1 && (d.y1 - d.y0) * (d.x1 - d.x0) > 0.03;
     }
 
     function labelTransform(d: any) {
