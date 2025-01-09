@@ -14,6 +14,7 @@ const Sunburst = () => {
   const { toast } = useToast();
   const [data, setData] = useState<SunburstData>({ name: "center" });
   const [isLoading, setIsLoading] = useState(false);
+  const [scale, setScale] = useState(1);
 
   const generateSegments = async (prompt: string, parentContext: string = "") => {
     if (!apiKey) {
@@ -64,9 +65,9 @@ const Sunburst = () => {
   useEffect(() => {
     if (!data || !svgRef.current) return;
 
-    const width = 800;
+    const width = 1200; // Increased from 800
     const height = width;
-    const radius = width / 4; // Increased radius for better visibility
+    const radius = width / 3; // Adjusted radius for better proportions with larger size
 
     d3.select(svgRef.current).selectAll("*").remove();
 
@@ -94,9 +95,21 @@ const Sunburst = () => {
 
     const svg = d3.select(svgRef.current)
       .attr("viewBox", [-width / 2, -height / 2, width, width])
-      .style("font", "10px sans-serif");
+      .style("font", "12px sans-serif"); // Increased font size
 
-    const path = svg.append("g")
+    // Add zoom behavior
+    const zoom = d3.zoom()
+      .scaleExtent([0.5, 3])
+      .on("zoom", (event) => {
+        setScale(event.transform.k);
+        svg.attr("transform", event.transform);
+      });
+
+    svg.call(zoom as any);
+
+    const g = svg.append("g");
+
+    const path = g.append("g")
       .selectAll("path")
       .data(root.descendants().slice(1))
       .join("path")
@@ -115,7 +128,7 @@ const Sunburst = () => {
         await generateSegments(p.data.name, parentContext);
       });
 
-    const label = svg.append("g")
+    const label = g.append("g")
       .attr("pointer-events", "none")
       .attr("text-anchor", "middle")
       .style("user-select", "none")
@@ -128,7 +141,7 @@ const Sunburst = () => {
       .text((d: any) => d.data.name);
 
     function arcVisible(d: any) {
-      return d.y1 <= 5 && d.y0 >= 0 && d.x1 > d.x0; // Increased max depth
+      return d.y1 <= 5 && d.y0 >= 0 && d.x1 > d.x0;
     }
 
     function labelVisible(d: any) {
@@ -163,8 +176,16 @@ const Sunburst = () => {
               onSubmit={handleSubmit}
               isLoading={isLoading}
             />
-            <div className="w-full max-w-3xl aspect-square">
-              <svg ref={svgRef} width="100%" height="100%" />
+            <div className="w-full max-w-[1200px] aspect-square relative">
+              <svg 
+                ref={svgRef} 
+                width="100%" 
+                height="100%" 
+                className="cursor-move"
+              />
+              <div className="absolute bottom-4 right-4 bg-white/80 px-3 py-1 rounded-full text-sm">
+                Zoom: {Math.round(scale * 100)}%
+              </div>
             </div>
           </div>
         </div>
