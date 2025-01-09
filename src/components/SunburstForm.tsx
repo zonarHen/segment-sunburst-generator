@@ -7,6 +7,7 @@ interface SunburstFormProps {
   onApiKeyChange: (value: string) => void;
   onCenterWordChange: (value: string) => void;
   onSubmit: (e: React.FormEvent) => void;
+  isLoading: boolean;
 }
 
 const SunburstForm = ({
@@ -14,7 +15,8 @@ const SunburstForm = ({
   centerWord,
   onApiKeyChange,
   onCenterWordChange,
-  onSubmit
+  onSubmit,
+  isLoading
 }: SunburstFormProps) => {
   return (
     <div className="w-full max-w-md space-y-4">
@@ -32,7 +34,9 @@ const SunburstForm = ({
           onChange={(e) => onCenterWordChange(e.target.value)}
           className="flex-1"
         />
-        <Button type="submit">Generate</Button>
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? "Generating..." : "Generate"}
+        </Button>
       </form>
     </div>
   );
