@@ -4,6 +4,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { generateSegmentsWithAI } from "../utils/geminiApi";
 import { SunburstData } from "../types/sunburst";
 import SunburstForm from "./SunburstForm";
+import { DataSidebar } from "./DataSidebar";
+import { SidebarProvider } from "./ui/sidebar";
 
 const Sunburst = () => {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -11,6 +13,7 @@ const Sunburst = () => {
   const [apiKey, setApiKey] = useState("");
   const { toast } = useToast();
   const [data, setData] = useState<SunburstData>({ name: "center" });
+  const [isLoading, setIsLoading] = useState(false);
 
   const generateSegments = async (prompt: string, parentContext: string = "") => {
     if (!apiKey) {
@@ -22,34 +25,39 @@ const Sunburst = () => {
       return;
     }
 
+    if (isLoading) return;
+
+    setIsLoading(true);
     try {
       const newData = await generateSegmentsWithAI(prompt, parentContext, apiKey);
-
+      
       if (parentContext) {
-        // Update existing data structure when clicking on a segment
-        const updateDataStructure = (node: SunburstData): SunburstData => {
-          if (node.name === prompt) {
-            return { ...node, ...newData };
-          }
-          if (node.children) {
-            return {
-              ...node,
-              children: node.children.map(child => updateDataStructure(child))
-            };
-          }
-          return node;
-        };
-        setData(prevData => updateDataStructure(prevData));
+        setData(prevData => {
+          const updateDataStructure = (node: SunburstData): SunburstData => {
+            if (node.name === prompt) {
+              return { ...node, children: newData.children };
+            }
+            if (node.children) {
+              return {
+                ...node,
+                children: node.children.map(child => updateDataStructure(child))
+              };
+            }
+            return node;
+          };
+          return updateDataStructure(prevData);
+        });
       } else {
-        // Set new data for initial word
         setData(newData);
       }
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to generate segments. Please check your API key and try again.",
+        description: "Failed to generate segments. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -60,7 +68,6 @@ const Sunburst = () => {
     const height = width;
     const radius = width / 6;
 
-    // Clear previous content
     d3.select(svgRef.current).selectAll("*").remove();
 
     const color = d3.scaleOrdinal(d3.quantize(d3.interpolateRainbow, data.children?.length || 1 + 1));
@@ -99,9 +106,10 @@ const Sunburst = () => {
 
     path.filter((d: any) => !d.children)
       .style("cursor", "pointer")
-      .on("click", (event: any, p: any) => {
+      .on("click", async (event: any, p: any) => {
+        if (isLoading) return;
         const parentContext = p.parent.data.name;
-        generateSegments(p.data.name, parentContext);
+        await generateSegments(p.data.name, parentContext);
       });
 
     const label = svg.append("g")
@@ -129,7 +137,7 @@ const Sunburst = () => {
       const y = (d.y0 + d.y1) / 2 * radius;
       return `rotate(${x - 90}) translate(${y},0) rotate(${x < 180 ? 0 : 180})`;
     }
-  }, [data]);
+  }, [data, isLoading]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -139,18 +147,26 @@ const Sunburst = () => {
   };
 
   return (
-    <div className="flex flex-col items-center gap-6 p-4">
-      <SunburstForm
-        apiKey={apiKey}
-        centerWord={centerWord}
-        onApiKeyChange={setApiKey}
-        onCenterWordChange={setCenterWord}
-        onSubmit={handleSubmit}
-      />
-      <div className="w-full max-w-3xl aspect-square">
-        <svg ref={svgRef} width="100%" height="100%" />
+    <SidebarProvider defaultOpen={true}>
+      <div className="flex min-h-screen w-full">
+        <DataSidebar data={data} />
+        <div className="flex-1 p-4">
+          <div className="flex flex-col items-center gap-6">
+            <SunburstForm
+              apiKey={apiKey}
+              centerWord={centerWord}
+              onApiKeyChange={setApiKey}
+              onCenterWordChange={setCenterWord}
+              onSubmit={handleSubmit}
+              isLoading={isLoading}
+            />
+            <div className="w-full max-w-3xl aspect-square">
+              <svg ref={svgRef} width="100%" height="100%" />
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 };
 
