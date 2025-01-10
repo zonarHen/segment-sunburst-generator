@@ -24,7 +24,7 @@ export const generateSegmentsWithAI = async (
   });
 
   const systemPrompt = parentContext 
-    ? `Given the concept "${prompt}" which is a component or aspect of "${parentContext}", generate 5-10 specific sub-components or aspects that are directly related to ${prompt} in the context of ${parentContext}. Feel free to vary the number of segments between 5 and 10 based on what makes the most sense for this specific concept. For example, if ${parentContext} is "bicycle" and ${prompt} is "frame", generate parts or aspects specific to bicycle frames.
+    ? `Given the concept "${prompt}" which is a component or aspect of "${parentContext}", generate 5-15 specific sub-components or aspects that are directly related to ${prompt} in the context of ${parentContext}. Feel free to generate the most natural number of segments for this specific concept - if the concept naturally has more components, you can include them all (up to 15). For example, if ${parentContext} is "bicycle" and ${prompt} is "frame", generate all relevant parts or aspects specific to bicycle frames.
 
       Format the response as a JSON object like this:
       {
@@ -35,7 +35,7 @@ export const generateSegmentsWithAI = async (
         ]
       }
       Keep responses focused and directly related to the parent concept.`
-    : `Break down the concept "${prompt}" into 5-10 main components or aspects. Feel free to vary the number based on what makes the most sense for this specific concept. Format the response as a JSON object like this:
+    : `Break down the concept "${prompt}" into 5-15 main components or aspects. Feel free to generate the most natural number of segments - if the concept naturally has more components, you can include them all (up to 15). Format the response as a JSON object like this:
       {
         "name": "${prompt}",
         "children": [
