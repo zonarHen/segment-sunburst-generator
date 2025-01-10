@@ -250,10 +250,6 @@ const Sunburst = () => {
     let startX = 0;
     let startY = 0;
 
-    svg.on("contextmenu", (event) => {
-      event.preventDefault();
-    });
-
     svg.on("mousedown", (event) => {
       // Check if we clicked on a path element (segment)
       const clickedElement = event.target as Element;
