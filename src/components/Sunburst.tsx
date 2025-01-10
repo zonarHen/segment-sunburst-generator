@@ -139,10 +139,10 @@ const Sunburst = () => {
     const zoom = d3.zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.5, 3])
       .filter((event) => {
-        // Allow wheel events, touch events, and right mouse button
+        // Allow wheel events, touch events, and mouse events
         if (event.type === 'wheel') return true;
         if (event.type === 'touchstart' || event.type === 'touchmove') return true;
-        if (event.type === 'mousedown') return event.button === 2;
+        if (event.type === 'mousedown') return true; // Allow all mouse buttons now
         return false;
       })
       .on("zoom", (event) => {
@@ -255,14 +255,18 @@ const Sunburst = () => {
     });
 
     svg.on("mousedown", (event) => {
-      if (event.button === 2) {
-        event.preventDefault();
-        isDragging = true;
-        dragStartTransform = d3.zoomTransform(svg.node()!);
-        const [x, y] = d3.pointer(event);
-        startX = x;
-        startY = y;
+      // Check if we clicked on a path element (segment)
+      const clickedElement = event.target as Element;
+      if (clickedElement.tagName === 'path') {
+        return; // Don't initiate drag if we clicked on a segment
       }
+
+      event.preventDefault();
+      isDragging = true;
+      dragStartTransform = d3.zoomTransform(svg.node()!);
+      const [x, y] = d3.pointer(event);
+      startX = x;
+      startY = y;
     });
 
     svg.on("mousemove", (event) => {
@@ -280,17 +284,13 @@ const Sunburst = () => {
     });
 
     svg.on("mouseup", () => {
-      if (isDragging) {
-        isDragging = false;
-        dragStartTransform = null;
-      }
+      isDragging = false;
+      dragStartTransform = null;
     });
 
     svg.on("mouseleave", () => {
-      if (isDragging) {
-        isDragging = false;
-        dragStartTransform = null;
-      }
+      isDragging = false;
+      dragStartTransform = null;
     });
 
     const path = g.append("g")
