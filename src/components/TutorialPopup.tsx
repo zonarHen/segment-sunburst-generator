@@ -5,14 +5,26 @@ import { ArrowLeft, ArrowRight, Key, Type, MousePointer, Download, Folder } from
 
 interface TutorialStep {
   title: string;
-  description: string;
+  description: string | JSX.Element;
   icon: JSX.Element;
 }
 
 const steps: TutorialStep[] = [
   {
     title: "API Key",
-    description: "Start by entering your Google API key in the input field at the top.",
+    description: (
+      <>
+        Start by entering your Google API key in the input field at the top.{" "}
+        <a 
+          href="https://aistudio.google.com/" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="text-blue-500 hover:text-blue-700 underline"
+        >
+          Get your free key here!
+        </a>
+      </>
+    ),
     icon: <Key className="w-12 h-12 text-primary mb-4" />,
   },
   {
