@@ -1,5 +1,22 @@
 # Welcome to your Lovable project
 
+This project features an interactive concept mapping tool powered by Google's Gemini AI and D3.js. The visualization is based on [D3's Zoomable Sunburst visualization](https://observablehq.com/@d3/zoomable-sunburst).
+
+## Getting Started
+
+1. **Get a Google API Key**
+   - Visit the [Google AI Studio](https://makersuite.google.com/app/apikey)
+   - Create a new API key if you don't have one
+   - Copy your API key
+   - Paste it in the application's sidebar when prompted
+
+2. **Using the App**
+   - Enter a central concept in the input field
+   - Click "Generate" to create the initial sunburst diagram
+   - Click on any outer segment to expand it further
+   - Use two fingers on a trackpad to scroll and zoom
+   - Use the download button to save your diagram as SVG
+
 ## Project info
 
 **URL**: https://lovable.dev/projects/26a44471-801c-4dbd-9318-9580a0de482a
@@ -52,13 +69,15 @@ npm run dev
 
 ## What technologies are used for this project?
 
-This project is built with .
+This project is built with:
 
 - Vite
 - TypeScript
 - React
 - shadcn-ui
 - Tailwind CSS
+- D3.js
+- Google's Gemini AI
 
 ## How can I deploy this project?
 
