@@ -139,7 +139,11 @@ const Sunburst = () => {
     const zoom = d3.zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.5, 3])
       .filter((event) => {
-        return event.type === 'wheel' || (event.type === 'mousedown' && event.button === 2);
+        // Allow wheel events, touch events, and right mouse button
+        if (event.type === 'wheel') return true;
+        if (event.type === 'touchstart' || event.type === 'touchmove') return true;
+        if (event.type === 'mousedown') return event.button === 2;
+        return false;
       })
       .on("zoom", (event) => {
         g.attr("transform", event.transform);
@@ -152,27 +156,93 @@ const Sunburst = () => {
       svg.call(zoom.transform, currentTransformRef.current);
     }
 
+    // Handle touch events for two-finger gestures
+    let touchDistance = 0;
+    let touchCenter = { x: 0, y: 0 };
+
+    svg.on("touchstart", (event) => {
+      if (event.touches.length === 2) {
+        event.preventDefault();
+        const touch1 = event.touches[0];
+        const touch2 = event.touches[1];
+        touchDistance = Math.hypot(
+          touch2.clientX - touch1.clientX,
+          touch2.clientY - touch1.clientY
+        );
+        touchCenter = {
+          x: (touch1.clientX + touch2.clientX) / 2,
+          y: (touch1.clientY + touch2.clientY) / 2,
+        };
+      }
+    });
+
+    svg.on("touchmove", (event) => {
+      if (event.touches.length === 2) {
+        event.preventDefault();
+        const touch1 = event.touches[0];
+        const touch2 = event.touches[1];
+        const newDistance = Math.hypot(
+          touch2.clientX - touch1.clientX,
+          touch2.clientY - touch1.clientY
+        );
+        
+        const newCenter = {
+          x: (touch1.clientX + touch2.clientX) / 2,
+          y: (touch1.clientY + touch2.clientY) / 2,
+        };
+
+        const transform = d3.zoomTransform(svg.node()!);
+        const scale = newDistance / touchDistance;
+        const newScale = Math.max(0.5, Math.min(3, transform.k * scale));
+        
+        svg.transition()
+          .duration(0)
+          .call(
+            zoom.transform,
+            d3.zoomIdentity
+              .translate(transform.x + (newCenter.x - touchCenter.x), transform.y + (newCenter.y - touchCenter.y))
+              .scale(newScale)
+          );
+
+        touchDistance = newDistance;
+        touchCenter = newCenter;
+      }
+    });
+
+    // Handle wheel events for trackpad gestures
     svg.on("wheel", (event) => {
       event.preventDefault();
       const transform = d3.zoomTransform(svg.node()!);
-      const delta = event.deltaY;
-      const newScale = Math.max(0.5, Math.min(3, transform.k - (delta * 0.002)));
       
-      const pointer = d3.pointer(event);
-      const [x, y] = pointer;
-      
-      svg.transition()
-        .duration(250)
-        .call(
-          zoom.transform,
-          d3.zoomIdentity
-            .translate(transform.x, transform.y)
-            .scale(newScale)
-            .translate(
-              (x - transform.x) * (1 - newScale / transform.k),
-              (y - transform.y) * (1 - newScale / transform.k)
-            )
-        );
+      // Check if it's a pinch-to-zoom gesture (trackpad)
+      if (event.ctrlKey || Math.abs(event.deltaY) < Math.abs(event.deltaX)) {
+        const delta = event.deltaY || event.deltaX;
+        const newScale = Math.max(0.5, Math.min(3, transform.k - (delta * 0.002)));
+        
+        const pointer = d3.pointer(event);
+        const [x, y] = pointer;
+        
+        svg.transition()
+          .duration(250)
+          .call(
+            zoom.transform,
+            d3.zoomIdentity
+              .translate(transform.x, transform.y)
+              .scale(newScale)
+              .translate(
+                (x - transform.x) * (1 - newScale / transform.k),
+                (y - transform.y) * (1 - newScale / transform.k)
+              )
+          );
+      } else {
+        // Regular two-finger trackpad pan
+        svg.transition()
+          .duration(0)
+          .call(
+            zoom.transform,
+            transform.translate(-event.deltaX * 0.5, -event.deltaY * 0.5)
+          );
+      }
     });
 
     let isDragging = false;
@@ -319,7 +389,13 @@ const Sunburst = () => {
           isLoading={isLoading}
         />
         <div className="flex-1">
-          <svg ref={svgRef} width="100%" height="100%" preserveAspectRatio="xMidYMid meet" />
+          <svg 
+            ref={svgRef} 
+            width="100%" 
+            height="100%" 
+            preserveAspectRatio="xMidYMid meet"
+            style={{ touchAction: 'none' }} // Prevent default touch behaviors
+          />
         </div>
       </div>
       <TutorialPopup />
