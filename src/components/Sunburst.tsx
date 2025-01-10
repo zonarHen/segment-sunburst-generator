@@ -215,8 +215,8 @@ const Sunburst = () => {
       const transform = d3.zoomTransform(svg.node()!);
       
       // Check if it's a pinch-to-zoom gesture (trackpad)
-      if (event.ctrlKey || Math.abs(event.deltaY) < Math.abs(event.deltaX)) {
-        const delta = event.deltaY || event.deltaX;
+      if (event.ctrlKey) {
+        const delta = event.deltaY;
         const newScale = Math.max(0.5, Math.min(3, transform.k - (delta * 0.002)));
         
         const pointer = d3.pointer(event);
