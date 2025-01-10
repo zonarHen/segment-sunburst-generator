@@ -251,6 +251,11 @@ const Sunburst = () => {
     let startY = 0;
 
     svg.on("mousedown", (event) => {
+      // Ignore right clicks (button 2)
+      if (event.button === 2) {
+        return;
+      }
+      
       // Check if we clicked on a path element (segment)
       const clickedElement = event.target as Element;
       if (clickedElement.tagName === 'path') {
@@ -390,7 +395,8 @@ const Sunburst = () => {
             width="100%" 
             height="100%" 
             preserveAspectRatio="xMidYMid meet"
-            style={{ touchAction: 'none' }} // Prevent default touch behaviors
+            style={{ touchAction: 'none' }}
+            onContextMenu={(e) => e.preventDefault()} // Prevent context menu on right click
           />
         </div>
       </div>
